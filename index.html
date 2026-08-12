@@ -1,0 +1,2964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Command Center</title>
+  <style>
+    :root {
+      --bg: #091018;
+      --panel: rgba(15, 23, 35, 0.92);
+      --panel-soft: rgba(23, 35, 51, 0.96);
+      --line: rgba(130, 167, 219, 0.15);
+      --line-strong: rgba(125, 213, 190, 0.26);
+      --text: #e8f1fb;
+      --muted: #8ca0b6;
+      --accent: #83dcc4;
+      --accent-deep: #1f564b;
+      --shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      color: var(--text);
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(131, 220, 196, 0.08), transparent 26%),
+        radial-gradient(circle at bottom right, rgba(91, 145, 255, 0.08), transparent 24%),
+        linear-gradient(180deg, #091018 0%, #0b121a 100%);
+    }
+
+    body {
+      padding: 8px;
+    }
+
+    .viewport {
+      width: 100%;
+      min-height: calc(100vh - 16px);
+      overflow: visible;
+    }
+
+    .dashboard {
+      width: 100%;
+      min-height: calc(100vh - 16px);
+      display: grid;
+      grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.5fr) minmax(0, 0.9fr);
+      gap: 8px;
+      transform: none !important;
+      align-items: start;
+    }
+
+    .dashboard-column {
+      min-width: 0;
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .dashboard-column > section {
+      min-width: 0;
+      min-height: 0;
+      grid-area: auto;
+    }
+
+    .todo-panel {
+      min-height: 150px;
+      border-color: rgba(255, 255, 255, 0.16);
+      background: #050608;
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    .todo-panel:hover {
+      border-color: rgba(255, 255, 255, 0.28);
+      box-shadow: 0 16px 34px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .todo-panel .panel-title {
+      color: #ffffff;
+    }
+
+    .todo-panel .panel-meta {
+      color: #aeb5bd;
+    }
+    .ai-desk {
+      grid-column: 1 / -1;
+      min-height: 430px;
+      margin-top: 4px;
+      padding: 12px;
+      border-color: rgba(166, 176, 190, 0.18);
+      background: linear-gradient(180deg, rgba(18, 23, 31, 0.98), rgba(13, 18, 26, 0.97));
+    }
+
+    .ai-desk:hover {
+      border-color: rgba(180, 190, 204, 0.28);
+    }
+    .bottom-left {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto auto;
+    }
+    .bottom-center { min-height: 450px; }
+    .bottom-right { min-height: 250px; }
+
+    .stack {
+      height: auto;
+      min-height: 0;
+      display: grid;
+      gap: 8px;
+    }
+
+    .left-stack {
+      grid-template-rows: auto auto;
+    }
+
+    .right-stack {
+      grid-template-rows: auto auto;
+    }
+
+    .panel,
+    .mini-panel {
+      min-height: 0;
+      overflow: visible;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 7px;
+      padding: 9px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(15, 23, 35, 0.96), rgba(14, 21, 32, 0.94));
+      box-shadow: var(--shadow);
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+      backdrop-filter: blur(14px);
+    }
+
+    .panel:hover,
+    .mini-panel:hover {
+      border-color: var(--line-strong);
+      box-shadow: 0 20px 42px rgba(0, 0, 0, 0.32);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 0.84rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    .panel-meta,
+    .tiny,
+    .sub {
+      color: var(--muted);
+      font-size: 0.68rem;
+    }
+
+    .timer-layout {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .time {
+      font-size: 1.7rem;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      transition: transform 240ms ease, text-shadow 240ms ease;
+    }
+
+    .timer-live .time {
+      transform: scale(1.01);
+      text-shadow: 0 0 18px rgba(131, 220, 196, 0.18);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      align-items: center;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(24, 36, 52, 0.98), rgba(17, 25, 36, 0.98));
+      color: var(--text);
+      padding: 5px 10px;
+      font-size: 0.71rem;
+      line-height: 1.1;
+      cursor: pointer;
+      transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: var(--line-strong);
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.16);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, #9ae9d4 0%, var(--accent) 100%);
+      border-color: var(--accent);
+      color: #06100d;
+      font-weight: 700;
+      box-shadow: 0 10px 24px rgba(131, 220, 196, 0.22);
+    }
+
+    .rule-list,
+    .cycle-list,
+    .campaign-list,
+    .active-list,
+    .todo-list,
+    .brand-checklist,
+    .legend {
+      min-height: 0;
+      display: grid;
+      gap: 5px;
+      align-content: start;
+    }
+
+    .brand-checklist {
+      grid-template-rows: none;
+      gap: 4px;
+      overflow: visible;
+    }
+
+    .rule-item,
+    .cycle-item,
+    .campaign-item,
+    .active-item,
+    .todo-item,
+    .legend-item,
+    .brand-row {
+      background: linear-gradient(180deg, rgba(24, 36, 52, 0.96), rgba(20, 31, 44, 0.96));
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      transition: border-color 160ms ease, transform 160ms ease, background 160ms ease;
+    }
+
+    .rule-item:hover,
+    .cycle-item:hover,
+    .campaign-item:hover,
+    .active-item:hover,
+    .todo-item:hover,
+    .legend-item:hover,
+    .brand-row:hover {
+      border-color: rgba(131, 220, 196, 0.22);
+    }
+
+    .rule-item,
+    .cycle-item,
+    .campaign-item,
+    .active-item,
+    .legend-item {
+      padding: 6px 8px;
+    }
+
+    .cycle-item {
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr);
+      gap: 6px;
+      align-items: center;
+    }
+
+    .cycle-legend {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) 82px 82px 24px;
+      gap: 7px;
+      align-items: center;
+      padding: 0 8px 2px 26px;
+      color: var(--muted);
+      font-size: 0.58rem;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .cycle-legend span:nth-child(3),
+    .cycle-legend span:nth-child(4) {
+      text-align: center;
+    }
+
+    .cycle-index {
+      color: var(--muted);
+      font-size: 0.62rem;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .cycle-date {
+      display: grid;
+      gap: 1px;
+      min-width: 0;
+    }
+
+    .cycle-date-label {
+      display: none;
+      color: var(--muted);
+      font-size: 0.54rem;
+      line-height: 1;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .campaign-item {
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr);
+      gap: 6px;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      border-left: 3px solid rgba(129, 143, 157, 0.4);
+      transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    }
+
+    .campaign-item.campaign-active {
+      border-left-color: #62cfa2;
+      background: linear-gradient(90deg, rgba(42, 112, 85, 0.23), rgba(24, 36, 52, 0.96) 18%);
+      box-shadow: inset 9px 0 18px rgba(72, 210, 156, 0.07), 0 0 13px rgba(72, 210, 156, 0.08);
+    }
+
+    .campaign-item.campaign-active .drag-handle {
+      color: #70d8ae;
+      text-shadow: 0 0 8px rgba(83, 218, 164, 0.48);
+    }
+
+    .campaign-item:not(.campaign-active) .drag-handle {
+      color: #75879a;
+      text-shadow: none;
+    }
+
+    .cycle-item.dragging {
+      opacity: 0.45;
+      border-color: var(--accent);
+    }
+
+    .campaign-item.dragging {
+      opacity: 0.45;
+      border-color: var(--accent);
+    }
+
+    .cycle-item.drag-over {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(131, 220, 196, 0.12);
+    }
+
+    .cycle-item.report-day {
+      border-color: rgba(229, 188, 64, 0.72);
+      background: linear-gradient(90deg, rgba(111, 82, 20, 0.2), rgba(20, 31, 44, 0.96) 34%);
+      box-shadow: 0 0 16px rgba(229, 188, 64, 0.14), inset 0 0 12px rgba(229, 188, 64, 0.045);
+    }
+
+    .report-badge {
+      grid-column: 2;
+      color: #f2cf65;
+      font-size: 0.58rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .campaign-item.drag-over {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(131, 220, 196, 0.12);
+    }
+
+    .drag-handle {
+      width: 14px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      cursor: grab;
+      font-size: 0.68rem;
+      letter-spacing: -1px;
+      user-select: none;
+    }
+
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+
+    .cycle-detail {
+      grid-column: 2;
+      display: grid;
+      gap: 6px;
+      padding-top: 2px;
+    }
+
+    .cycle-notes {
+      width: 100%;
+      min-height: 82px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      color: var(--text);
+      padding: 7px 9px 7px 20px;
+      font: inherit;
+      font-size: 0.7rem;
+      line-height: 19px;
+      background-color: rgba(16, 27, 39, 0.96);
+      background-image: none;
+    }
+
+    .cycle-detail-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .ai-result {
+      display: grid;
+      gap: 4px;
+      padding: 8px 9px;
+      border: 1px solid rgba(131, 220, 196, 0.25);
+      border-radius: 9px;
+      background: rgba(29, 78, 68, 0.2);
+      font-size: 0.7rem;
+    }
+
+    .ai-result strong {
+      color: var(--accent);
+    }
+
+    .rule-item {
+      font-size: 0.71rem;
+      line-height: 1.28;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 8px;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .rule-item input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      margin: 0;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .rule-item.complete .rule-text {
+      color: var(--muted);
+      text-decoration: line-through;
+      text-decoration-thickness: 1px;
+    }
+
+    .notes-area,
+    .task-input {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      resize: none;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(24, 36, 52, 0.96), rgba(20, 31, 44, 0.96));
+      color: var(--text);
+      padding: 8px 9px;
+      font-size: 0.74rem;
+      line-height: 1.3;
+      transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+    }
+
+    .notes-area:focus,
+    .task-input:focus,
+    .field:focus,
+    .select:focus,
+    .todo-text:focus {
+      outline: none;
+      border-color: rgba(131, 220, 196, 0.36);
+      box-shadow: 0 0 0 3px rgba(131, 220, 196, 0.08);
+    }
+
+    .notes-area {
+      height: 240px;
+      min-height: 240px;
+      overflow-y: auto;
+      padding: 8px 11px;
+      line-height: 23px;
+      background-color: rgba(19, 31, 44, 0.96);
+      background-image: none;
+      caret-color: var(--accent);
+    }
+
+    .notes-area:empty::before {
+      content: attr(data-placeholder);
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    .notes-toolbar {
+      display: inline-flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .notes-page-controls {
+      display: inline-flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .ai-desk-shell {
+      display: grid;
+      grid-template-columns: 210px minmax(0, 1fr);
+      min-height: 360px;
+      overflow: hidden;
+      border: 1px solid rgba(166, 176, 190, 0.17);
+      border-radius: 14px;
+      background: rgba(10, 13, 18, 0.72);
+    }
+
+    .ai-chat-sidebar {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 9px;
+      padding: 10px;
+      border-right: 1px solid rgba(166, 176, 190, 0.16);
+      background: rgba(20, 24, 31, 0.82);
+    }
+
+    .ai-desk .primary {
+      border-color: rgba(215, 221, 229, 0.3);
+      color: #10151c;
+      background: linear-gradient(180deg, #e0e5eb, #b9c1cb);
+      box-shadow: 0 9px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .ai-desk button:hover {
+      border-color: rgba(218, 224, 232, 0.4);
+    }
+
+    .ai-new-chat {
+      width: 100%;
+      min-height: 34px;
+      border-radius: 10px;
+    }
+
+    .ai-chat-list {
+      min-height: 0;
+      max-height: 326px;
+      overflow-y: auto;
+      display: grid;
+      gap: 5px;
+      align-content: start;
+    }
+
+    .ai-chat-item {
+      width: 100%;
+      min-width: 0;
+      display: grid;
+      gap: 3px;
+      padding: 9px 10px;
+      border-radius: 10px;
+      text-align: left;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .ai-chat-item.active {
+      border-color: rgba(190, 199, 211, 0.3);
+      background: rgba(105, 114, 127, 0.2);
+    }
+
+    .ai-chat-title,
+    .ai-chat-preview {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .ai-chat-title {
+      color: var(--text);
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .ai-chat-preview {
+      color: var(--muted);
+      font-size: 0.62rem;
+    }
+
+    .ai-desk-main {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 9px;
+      padding: 10px;
+    }
+
+    .ai-role-row {
+      display: grid;
+      grid-template-columns: minmax(150px, 0.32fr) minmax(240px, 1fr) auto auto;
+      gap: 7px;
+      align-items: center;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(166, 176, 190, 0.16);
+    }
+
+    .ai-role-row .field {
+      min-height: 30px;
+      padding: 6px 9px;
+      border: 1px solid rgba(166, 176, 190, 0.2);
+      border-radius: 9px;
+      background: rgba(32, 38, 48, 0.72);
+    }
+
+    .ai-role-row .field::placeholder {
+      color: var(--muted);
+    }
+
+    .ai-role-row .field:focus {
+      outline: none;
+      border-color: rgba(205, 213, 223, 0.42);
+      box-shadow: 0 0 0 3px rgba(205, 213, 223, 0.07);
+    }
+
+    .ai-role-row button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .ai-chat-log {
+      min-height: 0;
+      max-height: 270px;
+      overflow-y: auto;
+      display: grid;
+      gap: 8px;
+      align-content: start;
+      padding: 5px 7px 9px;
+    }
+
+    .ai-message {
+      width: fit-content;
+      max-width: min(72%, 720px);
+      padding: 9px 11px;
+      border-radius: 13px;
+      font-size: 0.75rem;
+      line-height: 1.42;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .ai-message.user {
+      justify-self: end;
+      background: rgba(72, 82, 96, 0.36);
+      border: 1px solid rgba(176, 187, 202, 0.18);
+      border-bottom-right-radius: 4px;
+    }
+
+    .ai-message.assistant {
+      justify-self: start;
+      background: rgba(53, 59, 69, 0.54);
+      border: 1px solid rgba(183, 192, 204, 0.2);
+      border-bottom-left-radius: 4px;
+    }
+
+    .ai-message.thinking {
+      color: var(--muted);
+    }
+
+    .ai-message.thinking::after {
+      content: "";
+      display: inline-block;
+      width: 18px;
+      height: 5px;
+      margin-left: 7px;
+      background: radial-gradient(circle, #c3cad3 1.5px, transparent 2px) 0 0 / 6px 5px;
+      animation: ai-pulse 900ms ease-in-out infinite alternate;
+    }
+
+    @keyframes ai-pulse {
+      to { opacity: 0.28; }
+    }
+
+    .ai-message-label {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--muted);
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .ai-command-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 7px;
+    }
+
+    .ai-command-input {
+      min-width: 0;
+      border: 1px solid rgba(166, 176, 190, 0.24);
+      border-radius: 999px;
+      background: rgba(35, 42, 52, 0.96);
+      color: var(--text);
+      padding: 9px 13px;
+      font: inherit;
+      font-size: 0.75rem;
+    }
+
+    .ai-command-input:focus {
+      outline: none;
+      border-color: rgba(205, 213, 223, 0.42);
+      box-shadow: 0 0 0 3px rgba(205, 213, 223, 0.07);
+    }
+
+    .notes-page-controls .select {
+      width: 105px;
+    }
+
+    .notes-toolbar button {
+      min-width: 27px;
+      padding: 4px 7px;
+      font-size: 0.7rem;
+    }
+
+    .notes-toolbar .italic-button {
+      font-style: italic;
+    }
+
+    .draw-controls {
+      position: fixed;
+      right: 14px;
+      top: 14px;
+      bottom: auto;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(15, 23, 35, 0.94);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      touch-action: none;
+    }
+
+    .draw-move-handle {
+      display: inline-grid;
+      place-items: center;
+      min-width: 28px;
+      min-height: 26px;
+      color: var(--muted);
+      cursor: grab;
+      user-select: none;
+      letter-spacing: -1px;
+    }
+
+    .draw-move-handle:active {
+      cursor: grabbing;
+    }
+
+    .draw-controls:not(.expanded) .draw-options {
+      display: none;
+    }
+
+    .draw-options {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .draw-controls input[type="range"] {
+      width: 72px;
+      accent-color: var(--accent);
+    }
+
+    .doodle-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      width: 100vw;
+      height: 100vh;
+      cursor: crosshair;
+    }
+
+    .doodle-layer.enabled {
+      display: block;
+    }
+
+    .summary-grid {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .chart-wrap {
+      display: grid;
+      justify-items: center;
+      gap: 7px;
+    }
+
+    .pie {
+      width: 104px;
+      height: 104px;
+      position: relative;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      background: conic-gradient(var(--accent) 0deg, var(--accent) 0deg, var(--accent-deep) 0deg, var(--accent-deep) 360deg);
+      box-shadow: inset 0 0 26px rgba(131, 220, 196, 0.06);
+      transition: background 320ms ease, transform 220ms ease;
+    }
+
+    .pie:hover {
+      transform: scale(1.02);
+    }
+
+    .pie::after {
+      content: "";
+      position: absolute;
+      inset: 17px;
+      border-radius: 50%;
+      background: rgba(15, 23, 35, 0.98);
+      border: 1px solid var(--line);
+    }
+
+    .pie-value {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: 0.94rem;
+      font-weight: 700;
+      z-index: 1;
+    }
+
+    .legend-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 7px;
+      align-items: center;
+      font-size: 0.71rem;
+    }
+
+    .swatch {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 12px rgba(131, 220, 196, 0.18);
+    }
+
+    .swatch.pending {
+      background: var(--accent-deep);
+      box-shadow: none;
+    }
+
+    .cycle-top,
+    .campaign-top,
+    .active-top {
+      display: grid;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .cycle-top {
+      grid-template-columns: 24px minmax(0, 1fr) 72px 72px auto;
+    }
+
+    .cycle-top .field {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .campaign-top {
+      grid-template-columns: minmax(0, 1fr) repeat(3, auto);
+    }
+
+    .active-top {
+      grid-template-columns: 1fr 72px;
+    }
+
+    .field,
+    .todo-text {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      padding: 0;
+      font-size: 0.72rem;
+    }
+
+    .cycle-date .field {
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(11, 18, 26, 0.98);
+      color: var(--text);
+      padding: 4px 7px;
+      font-size: 0.67rem;
+    }
+
+    .status-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 0.66rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .status-toggle input {
+      appearance: none;
+      width: 34px;
+      height: 19px;
+      margin: 0;
+      border: 1px solid rgba(140, 160, 182, 0.32);
+      border-radius: 999px;
+      background: #4b5665;
+      cursor: pointer;
+      position: relative;
+      transition: background 180ms ease, border-color 180ms ease;
+    }
+
+    .status-toggle input::after {
+      content: "";
+      position: absolute;
+      width: 13px;
+      height: 13px;
+      top: 2px;
+      left: 2px;
+      border-radius: 50%;
+      background: #dfe7ef;
+      transition: transform 180ms ease;
+    }
+
+    .status-toggle input:checked {
+      background: var(--accent-deep);
+      border-color: var(--accent);
+    }
+
+    .status-toggle input:checked::after {
+      transform: translateX(15px);
+      background: var(--accent);
+    }
+
+    .status-toggle input:checked + span {
+      color: var(--accent);
+    }
+
+    .platform-toggle span {
+      min-width: 31px;
+    }
+
+    .platform-toggle.google input:checked {
+      background: #715c12;
+      border-color: #f4c542;
+      box-shadow: 0 0 10px rgba(244, 197, 66, 0.18);
+    }
+
+    .platform-toggle.google input:checked::after { background: #f4c542; }
+    .platform-toggle.google input:checked + span { color: #f4c542; }
+
+    .platform-toggle.meta input:checked {
+      background: #1e4b82;
+      border-color: #65a7ff;
+      box-shadow: 0 0 10px rgba(101, 167, 255, 0.18);
+    }
+
+    .platform-toggle.meta input:checked::after { background: #65a7ff; }
+    .platform-toggle.meta input:checked + span { color: #8bbcff; }
+
+    .platform-toggle.tiktok input:checked {
+      background: #090b0e;
+      border-color: #313844;
+      box-shadow: 0 0 9px rgba(242, 244, 247, 0.1);
+    }
+
+    .platform-toggle.tiktok input:checked::after { background: #f2f4f7; }
+    .platform-toggle.tiktok input:checked + span { color: #f2f4f7; }
+
+    .tracker-layout {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 7px;
+    }
+
+    .checklist-head {
+      display: grid;
+      grid-template-columns: 1.18fr repeat(7, 42px) 32px;
+      gap: 4px;
+      padding: 0 2px;
+      color: var(--muted);
+      font-size: 0.56rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .brand-row {
+      display: grid;
+      grid-template-columns: 1.18fr repeat(7, 42px) 32px;
+      gap: 4px;
+      align-items: center;
+      min-height: 0;
+      padding: 3px 7px;
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+      --progress: 0%;
+    }
+
+    .brand-row::before {
+      content: "";
+      position: absolute;
+      z-index: 0;
+      inset: 1px auto 1px 1px;
+      width: var(--progress);
+      border-radius: 9px;
+      background: linear-gradient(90deg, rgba(164, 128, 34, 0.08), rgba(229, 188, 64, 0.14));
+      box-shadow: 5px 0 10px rgba(229, 188, 64, 0.035);
+      transition: width 360ms ease, opacity 240ms ease;
+      pointer-events: none;
+    }
+
+    .brand-row:hover::before {
+      opacity: 0.9;
+    }
+
+    .brand-row > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-name {
+      font-size: 0.7rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .brand-row input[type="checkbox"],
+    .todo-item input[type="checkbox"] {
+      width: 13px;
+      height: 13px;
+      margin: 0 auto;
+      accent-color: var(--accent);
+      transition: transform 160ms ease;
+    }
+
+    .brand-row input[type="checkbox"]:checked,
+    .todo-item input[type="checkbox"]:checked {
+      transform: scale(1.07);
+    }
+
+    .progress-pill {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.62rem;
+    }
+
+    .task-layout {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 0.44fr 0.56fr;
+      gap: 8px;
+    }
+
+    .task-box,
+    .task-list-box {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 6px;
+    }
+
+    .todo-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 7px;
+      align-items: center;
+      padding: 6px 8px;
+      border-color: rgba(220, 217, 207, 0.22);
+      background: #e0ded7;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .todo-panel .todo-item:hover {
+      border-color: rgba(255, 255, 255, 0.45);
+      background: #eceae4;
+    }
+
+    .todo-panel .todo-text {
+      color: #282c2d;
+      font-weight: 600;
+    }
+
+    .todo-panel .todo-text::placeholder {
+      color: #77756d;
+    }
+
+    .todo-panel .todo-text:focus {
+      box-shadow: none;
+    }
+
+    .todo-panel .todo-item input[type="checkbox"] {
+      accent-color: #3f806c;
+    }
+
+    .todo-panel .todo-item button {
+      border-color: rgba(35, 35, 35, 0.18);
+      background: rgba(35, 35, 35, 0.08);
+      color: #303236;
+      box-shadow: none;
+    }
+
+    .todo-panel .done {
+      opacity: 0.68;
+    }
+
+    .todo-panel .done .todo-text {
+      color: #77766f;
+      text-decoration: line-through;
+    }
+
+    .small-note {
+      color: var(--muted);
+      font-size: 0.7rem;
+    }
+
+    @media (max-width: 1080px) {
+      .dashboard {
+        grid-template-columns: minmax(230px, 0.78fr) minmax(500px, 1.5fr) minmax(260px, 0.9fr);
+      }
+    }
+
+    @media (max-width: 760px) {
+      .ai-desk-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .ai-chat-sidebar {
+        grid-template-columns: 120px minmax(0, 1fr);
+        grid-template-rows: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .ai-chat-list {
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(130px, 180px);
+        overflow-x: auto;
+        overflow-y: hidden;
+      }
+
+      .ai-message {
+        max-width: 88%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="viewport">
+  <main class="dashboard" id="dashboard">
+    <section class="top-left">
+      <div class="stack left-stack">
+        <article class="mini-panel timer-live" id="timerPanel">
+          <div class="panel-head">
+            <h2 class="panel-title">Pomodoro Timer</h2>
+            <span class="panel-meta" id="todayLabel"></span>
+          </div>
+          <div class="timer-layout">
+            <div>
+              <div class="time" id="timerDisplay">25:00</div>
+              <div class="sub" id="timerStatus">Focus session</div>
+            </div>
+            <div class="actions">
+              <button class="primary" id="startTimer">Start</button>
+              <button id="pauseTimer">Pause</button>
+              <button id="resetTimer">Reset</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="mini-panel">
+          <div class="panel-head">
+            <h2 class="panel-title">Rule Box</h2>
+            <span class="panel-meta">Daily checks</span>
+          </div>
+          <div class="rule-list" id="ruleList"></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="top-center panel">
+      <div class="panel-head">
+        <h2 class="panel-title">Brand Completion</h2>
+        <span class="panel-meta">Checklist summary</span>
+      </div>
+      <div class="summary-grid">
+        <div class="chart-wrap">
+          <div class="pie" id="pieChart">
+            <div class="pie-value" id="pieValue">0%</div>
+          </div>
+          <div class="tiny" id="completionText">0 of 0 items done</div>
+        </div>
+        <div class="legend">
+          <div class="legend-item">
+            <span class="swatch"></span>
+            <span>Completed</span>
+            <strong id="doneCount">0</strong>
+          </div>
+          <div class="legend-item">
+            <span class="swatch pending"></span>
+            <span>Pending</span>
+            <strong id="pendingCount">0</strong>
+          </div>
+          <div class="legend-item">
+            <span class="swatch"></span>
+            <span>Monthly content target</span>
+            <strong>16 creatives / 4 videos</strong>
+          </div>
+          <div class="legend-item">
+            <span class="swatch pending"></span>
+            <span>Notion content calendar</span>
+            <strong>Included</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="top-right">
+      <div class="stack right-stack">
+        <article class="mini-panel">
+          <div class="panel-head">
+            <h2 class="panel-title">Brand Cycles</h2>
+            <button id="addCycle">Add</button>
+          </div>
+          <div class="cycle-legend" aria-hidden="true">
+            <span>#</span>
+            <span>Brand</span>
+            <span>Start of month</span>
+            <span>End of month</span>
+            <span></span>
+          </div>
+          <div class="cycle-list" id="cycleList"></div>
+        </article>
+
+        <article class="mini-panel campaigns-panel">
+          <div class="panel-head">
+            <h2 class="panel-title">Active Campaigns</h2>
+            <button id="addCampaign">Add</button>
+          </div>
+          <div class="campaign-list" id="campaignList"></div>
+        </article>
+
+      </div>
+    </section>
+
+    <section class="todo-panel panel">
+      <div class="panel-head">
+        <h2 class="panel-title">To-do List</h2>
+        <span class="panel-meta">Tasks from notes</span>
+      </div>
+      <div class="todo-list" id="todoList"></div>
+    </section>
+
+    <section class="bottom-left panel">
+      <div class="panel-head">
+        <h2 class="panel-title">Notes</h2>
+        <div class="notes-page-controls">
+          <select class="select" id="notePageSelect" aria-label="Notes page"></select>
+          <button id="addNotePage" title="New notes page">+</button>
+          <button id="deleteNotePage" title="Delete this notes page">x</button>
+        </div>
+      </div>
+      <div class="notes-toolbar">
+          <button id="boldNote" title="Bold"><strong>B</strong></button>
+          <button class="italic-button" id="italicNote" title="Italic">I</button>
+          <button id="bulletNote" title="Bullet list">List</button>
+          <button class="primary" id="makeNotesTodo">Make to-do</button>
+      </div>
+      <div class="notes-area" id="notesArea" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Write notes here..."></div>
+    </section>
+
+    <section class="ai-desk panel">
+      <div class="panel-head">
+        <h2 class="panel-title">Desk AI</h2>
+        <span class="panel-meta" id="deskAiStatus">Local AI brain</span>
+      </div>
+      <div class="ai-desk-shell">
+        <aside class="ai-chat-sidebar">
+          <button class="primary ai-new-chat" id="addAiChat">+ New chat</button>
+          <div class="ai-chat-list" id="aiChatList"></div>
+        </aside>
+        <div class="ai-desk-main">
+          <div class="ai-role-row">
+            <input class="field" id="aiChatTitleInput" placeholder="Chat name" aria-label="Chat name">
+            <input class="field" id="aiRoleInput" placeholder="Role for this chat, e.g. Act as Grammarly">
+            <button id="connectMemory" title="Connect Supermemory">Memory</button>
+            <button id="deleteAiChat">Delete chat</button>
+          </div>
+          <div class="ai-chat-log" id="aiChatLog"></div>
+          <div class="ai-command-row">
+            <input class="ai-command-input" id="aiCommandInput" placeholder="Message Desk AI...">
+            <button class="primary" id="sendAiCommand">Send</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="bottom-center panel">
+      <div class="panel-head">
+        <h2 class="panel-title">Brand Management Checklist</h2>
+        <span class="panel-meta">Calendar, caption, setup, design, report</span>
+      </div>
+      <div class="tracker-layout">
+        <div class="checklist-head">
+          <span>Brand</span>
+          <span>Cal</span>
+          <span>Cap</span>
+          <span>Ads</span>
+          <span>16C</span>
+          <span>4V</span>
+          <span>Des</span>
+          <span>Rep</span>
+          <span>%</span>
+        </div>
+        <div class="brand-checklist" id="brandChecklist"></div>
+      </div>
+    </section>
+
+  </main>
+  </div>
+
+  <canvas class="doodle-layer" id="doodleLayer"></canvas>
+  <div class="draw-controls">
+    <span class="draw-move-handle" id="drawMoveHandle" title="Drag toolbar">::::</span>
+    <button id="drawToggle">Pencil</button>
+    <div class="draw-options">
+      <label class="tiny">Color <input id="drawColor" type="color" value="#d6f4eb"></label>
+      <label class="tiny">Size <input id="drawSize" type="range" min="1" max="12" value="3"></label>
+      <button id="undoDrawing">Undo</button>
+      <button id="clearDrawing">Clear</button>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "command-center-fixed-v3";
+
+    const brandDefaults = [
+      "KL Mobile Events",
+      "Streat Motor Tyre",
+      "CMD",
+      "G Lounge",
+      "HERAVIS",
+      "CARE LUGAGGE",
+      "DM EDU",
+      "Platform Daddy",
+      "Tool Genie IO + Meme",
+      "BEON"
+    ];
+
+    const cycleDefaults = [
+      { name: "KL Mobile Events", start: "13", end: "12" },
+      { name: "CMD", start: "22", end: "23" },
+      { name: "Streat Motor Tyre", start: "3", end: "4" },
+      { name: "G Lounge", start: "24", end: "25" },
+      { name: "CARE LUGAGGE", start: "1", end: "30" },
+      { name: "HERAVIS", start: "8", end: "7" },
+      { name: "DM EDU", start: "3", end: "4" },
+      { name: "Platform Daddy", start: "1", end: "30" },
+      { name: "Tool Genie IO + Meme", start: "15", end: "16" },
+      { name: "EMINDS", start: "25", end: "24" },
+      { name: "Anchor Brand", start: "1", end: "30" },
+      { name: "Recova", start: "9", end: "10" },
+      { name: "BEON", start: "1", end: "31" }
+    ];
+
+    const activeCampaignDefaults = [
+      "KL Mobile Events",
+      "CARE LUGAGGE",
+      "DM EDU",
+      "Streat Motor Tyre",
+      "HERAVIS",
+      "Tool Genie IO + Meme",
+      "Recova"
+    ];
+
+    function makeCycle(name) {
+      const preset = cycleDefaults.find((cycle) => cycle.name === name);
+      return {
+        name,
+        start: preset?.start || "1",
+        end: preset?.end || "31",
+        notes: "",
+        open: false,
+        aiResult: null
+      };
+    }
+
+    function makeCampaign(brand) {
+      return { brand, google: false, meta: false, tiktok: false };
+    }
+
+    function ordinalDay(value) {
+      const match = String(value ?? "").match(/\d+/);
+      if (!match) return "";
+      const day = Math.min(31, Math.max(1, Number(match[0])));
+      const suffix = day % 100 >= 11 && day % 100 <= 13
+        ? "th"
+        : ({ 1: "st", 2: "nd", 3: "rd" }[day % 10] || "th");
+      return `${day}${suffix}`;
+    }
+
+    function isReportDay(cycle) {
+      const today = new Date();
+      const endMatch = String(cycle.end ?? "").match(/\d+/);
+      if (!endMatch) return false;
+      const endDay = Number(endMatch[0]);
+      const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+      const effectiveEndDay = Math.min(endDay, lastDayOfMonth);
+      return today.getDate() === effectiveEndDay;
+    }
+
+    function makeContextTask(brand, note) {
+      const text = note.trim().replace(/\s+/g, " ");
+      const progress = text.match(/(\d+)\s+(videos?|creatives?|captions?|posts?|reports?)\b.*?(\d+)\s+(done|completed|complete).*?(\d+)\s+(left|remaining)/i);
+
+      if (progress) {
+        const item = progress[2].toLowerCase().replace(/s$/, "");
+        const remaining = Number(progress[5]);
+        const count = `${remaining} ${item}${remaining === 1 ? "" : "s"}`;
+
+        if (item === "video") return `${brand}: Get ${count} from editor`;
+        return `${brand}: Complete ${count}`;
+      }
+
+      const remainingFirst = text.match(/(\d+)\s+(videos?|creatives?|captions?|posts?|reports?)\s+(left|remaining)/i);
+      if (remainingFirst) {
+        const item = remainingFirst[2].toLowerCase().replace(/s$/, "");
+        const count = `${remainingFirst[1]} ${item}${remainingFirst[1] === "1" ? "" : "s"}`;
+        if (item === "video") return `${brand}: Get ${count} from editor`;
+        return `${brand}: Complete ${count}`;
+      }
+
+      return `${brand}: ${text.charAt(0).toUpperCase()}${text.slice(1)}`;
+    }
+
+    async function makeAiTask(brand, note) {
+      const cycle = state.cycles.find((item) => item.name.trim().toLowerCase() === brand.trim().toLowerCase());
+      const campaign = state.campaigns.find((item) => item.brand.trim().toLowerCase() === brand.trim().toLowerCase());
+      const checklist = state.brandChecklist.find((item) => item.name.trim().toLowerCase() === brand.trim().toLowerCase());
+      const checklistKeys = ["contentCalendar", "caption", "campaignSetup", "creatives16", "videos4", "designerCoordination", "report"];
+      const completed = checklist ? checklistKeys.filter((key) => checklist[key]).length : 0;
+      const platforms = campaign
+        ? [campaign.google && "Google", campaign.meta && "Meta", campaign.tiktok && "TikTok"].filter(Boolean).join(", ") || "none active"
+        : "none recorded";
+      const brandTasks = state.todos
+        .filter((todo) => todo.text.toLowerCase().startsWith(`${brand.toLowerCase()}:`))
+        .map((todo) => todo.text)
+        .join(" | ") || "none";
+
+      const response = await fetch("http://127.0.0.1:8766/api/smart-task", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          brand,
+          cycle: cycle ? `${cycle.start}-${cycle.end}` : "not recorded",
+          platforms,
+          checklist: checklist ? `${completed} of ${checklistKeys.length} complete` : "not recorded",
+          note,
+          brand_tasks: brandTasks,
+          daily_rules: state.rules.map((rule) => rule.text).join(" | ")
+        })
+      });
+
+      if (!response.ok) throw new Error("Local AI is unavailable");
+      return response.json();
+    }
+
+    function makeBrandRow(name) {
+      return {
+        name,
+        contentCalendar: false,
+        caption: false,
+        campaignSetup: false,
+        creatives16: false,
+        videos4: false,
+        designerCoordination: false,
+        report: false
+      };
+    }
+
+    const defaultState = {
+      notes: "",
+      doodle: "",
+      drawToolbar: { x: null, y: null },
+      notePages: [
+        { id: "page-1", title: "Page 1", content: "" }
+      ],
+      activeNotePageId: "page-1",
+      aiChats: [
+        {
+          id: "desk-ai-1",
+          title: "Desk AI",
+          role: "Command Center operations copilot",
+          messages: [
+            { role: "assistant", content: "I am Desk AI. I can operate campaigns, checklists, brand cycles, notes, tasks, rules, and the Pomodoro timer. Tell me what to change or ask me to plan." }
+          ]
+        }
+      ],
+      activeAiChatId: "desk-ai-1",
+      taskInput: "",
+      todos: [],
+      rules: [
+        { text: "Morning check all brand campaigns.", done: false },
+        { text: "Check content calendar and creation progress.", done: false },
+        { text: "Check client replies and pending approvals.", done: false },
+        { text: "Evening check and set next action.", done: false }
+      ],
+      brandChecklist: brandDefaults.map(makeBrandRow),
+      cycles: cycleDefaults.map((preset) => makeCycle(preset.name)),
+      campaigns: activeCampaignDefaults.map(makeCampaign),
+      activeBrands: [
+        { name: "", status: "Active" }
+      ],
+      timerSeconds: 1500
+    };
+
+    const state = loadState();
+    ensureBrandCycles();
+    ensureActiveCampaigns();
+    let timerInterval = null;
+    let draggedCycleIndex = null;
+    let draggedCampaignIndex = null;
+    let deskAiThinkingChatId = "";
+
+    function ensureBrandCycles() {
+      state.cycles = state.cycles.filter((cycle) => cycle.name.trim());
+      state.cycles.forEach((cycle) => {
+        const preset = cycleDefaults.find((item) => item.name.toLowerCase() === cycle.name.trim().toLowerCase());
+        if (preset) {
+          cycle.start = preset.start;
+          cycle.end = preset.end;
+        }
+      });
+      const existing = new Set(
+        state.cycles.map((cycle) => cycle.name.trim().toLowerCase()).filter(Boolean)
+      );
+
+      cycleDefaults.forEach((preset) => {
+        if (!existing.has(preset.name.toLowerCase())) {
+          state.cycles.push(makeCycle(preset.name));
+        }
+      });
+    }
+
+    function ensureActiveCampaigns() {
+      const seen = new Set();
+      state.campaigns = state.campaigns.filter((campaign) => {
+        const name = campaign.brand.trim().toLowerCase();
+        if (!name || seen.has(name)) return false;
+        seen.add(name);
+        return true;
+      });
+      const existing = new Set(
+        state.campaigns.map((campaign) => campaign.brand.trim().toLowerCase())
+      );
+
+      activeCampaignDefaults.forEach((brand) => {
+        if (!existing.has(brand.toLowerCase())) {
+          state.campaigns.push(makeCampaign(brand));
+        }
+      });
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return structuredClone(defaultState);
+        const parsed = JSON.parse(raw);
+        return {
+          notes: parsed.notes || "",
+          doodle: parsed.doodle || "",
+          drawToolbar: parsed.drawToolbar || { x: null, y: null },
+          notePages: parsed.notePages?.length ? parsed.notePages : [{ id: "page-1", title: "Page 1", content: parsed.notes || "" }],
+          activeNotePageId: parsed.activeNotePageId || parsed.notePages?.[0]?.id || "page-1",
+          aiChats: parsed.aiChats?.length ? parsed.aiChats : structuredClone(defaultState.aiChats),
+          activeAiChatId: parsed.activeAiChatId || parsed.aiChats?.[0]?.id || "desk-ai-1",
+          taskInput: parsed.taskInput || "",
+          todos: parsed.todos || [],
+          rules: parsed.rules?.length ? parsed.rules : structuredClone(defaultState.rules),
+          brandChecklist: parsed.brandChecklist?.length ? parsed.brandChecklist : structuredClone(defaultState.brandChecklist),
+          cycles: parsed.cycles?.length ? parsed.cycles : structuredClone(defaultState.cycles),
+          campaigns: parsed.campaigns?.length ? parsed.campaigns : structuredClone(defaultState.campaigns),
+          activeBrands: parsed.activeBrands?.length ? parsed.activeBrands : structuredClone(defaultState.activeBrands),
+          timerSeconds: typeof parsed.timerSeconds === "number" ? parsed.timerSeconds : 1500
+        };
+      } catch {
+        return structuredClone(defaultState);
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      // The desktop version writes the same data to its local data file.
+      window.commandCenterFile?.save(state).catch(() => {});
+      updateSummary(false);
+    }
+
+    async function loadDesktopFile() {
+      if (!window.commandCenterFile) return;
+
+      try {
+        const saved = await window.commandCenterFile.read();
+        if (!saved) {
+          await window.commandCenterFile.save(state);
+          return;
+        }
+        Object.assign(state, loadSavedState(saved));
+        ensureBrandCycles();
+        ensureActiveCampaigns();
+        renderAll();
+        restoreDoodle();
+        restoreDrawToolbar();
+      } catch {
+        // Browser storage remains available if the local file cannot be read.
+      }
+    }
+
+    function loadSavedState(parsed) {
+      return {
+        notes: parsed.notes || "",
+        doodle: parsed.doodle || "",
+        drawToolbar: parsed.drawToolbar || { x: null, y: null },
+        notePages: parsed.notePages?.length ? parsed.notePages : [{ id: "page-1", title: "Page 1", content: parsed.notes || "" }],
+        activeNotePageId: parsed.activeNotePageId || parsed.notePages?.[0]?.id || "page-1",
+        aiChats: parsed.aiChats?.length ? parsed.aiChats : structuredClone(defaultState.aiChats),
+        activeAiChatId: parsed.activeAiChatId || parsed.aiChats?.[0]?.id || "desk-ai-1",
+        taskInput: parsed.taskInput || "",
+        todos: parsed.todos || [],
+        rules: parsed.rules?.length ? parsed.rules : structuredClone(defaultState.rules),
+        brandChecklist: parsed.brandChecklist?.length ? parsed.brandChecklist : structuredClone(defaultState.brandChecklist),
+        cycles: parsed.cycles?.length ? parsed.cycles : structuredClone(defaultState.cycles),
+        campaigns: parsed.campaigns?.length ? parsed.campaigns : structuredClone(defaultState.campaigns),
+        activeBrands: parsed.activeBrands?.length ? parsed.activeBrands : structuredClone(defaultState.activeBrands),
+        timerSeconds: typeof parsed.timerSeconds === "number" ? parsed.timerSeconds : 1500
+      };
+    }
+
+    function renderCycles() {
+      const host = document.getElementById("cycleList");
+      host.innerHTML = "";
+      state.cycles.forEach((item, index) => {
+        const card = document.createElement("div");
+        const reportDay = isReportDay(item);
+        card.className = `cycle-item ${reportDay ? "report-day" : ""}`;
+        card.title = reportDay ? `${item.name}: report day today` : `${item.name}: monthly cycle`;
+
+        const handle = document.createElement("span");
+        handle.className = "drag-handle";
+        handle.draggable = true;
+        handle.textContent = "....";
+        handle.title = "Drag to reorder";
+
+        const top = document.createElement("div");
+        top.className = "cycle-top";
+
+        const indexLabel = document.createElement("span");
+        indexLabel.className = "cycle-index";
+        indexLabel.textContent = String(index + 1);
+        indexLabel.title = `Brand ${index + 1} of ${state.cycles.length}`;
+
+        const name = document.createElement("input");
+        name.className = "field";
+        name.placeholder = "Brand";
+        name.value = item.name;
+        name.addEventListener("input", () => {
+          state.cycles[index].name = name.value;
+          saveState();
+        });
+
+        const startWrap = document.createElement("div");
+        startWrap.className = "cycle-date";
+        const startLabel = document.createElement("span");
+        startLabel.className = "cycle-date-label";
+        startLabel.textContent = "Start";
+        const start = document.createElement("input");
+        start.className = "field";
+        start.placeholder = "1st";
+        start.value = ordinalDay(item.start);
+        start.addEventListener("input", () => {
+          state.cycles[index].start = start.value;
+          saveState();
+        });
+        startWrap.append(startLabel, start);
+
+        const endWrap = document.createElement("div");
+        endWrap.className = "cycle-date";
+        const endLabel = document.createElement("span");
+        endLabel.className = "cycle-date-label";
+        endLabel.textContent = "End";
+        const end = document.createElement("input");
+        end.className = "field";
+        end.placeholder = "31st";
+        end.value = ordinalDay(item.end);
+        end.addEventListener("input", () => {
+          state.cycles[index].end = end.value;
+          saveState();
+        });
+        endWrap.append(endLabel, end);
+
+        const expand = document.createElement("button");
+        expand.textContent = item.open ? "-" : "+";
+        expand.title = item.open ? "Hide brand notes" : "Show brand notes";
+        expand.addEventListener("click", () => {
+          state.cycles[index].open = !item.open;
+          renderCycles();
+          saveState();
+        });
+
+        card.addEventListener("dragstart", (event) => {
+          draggedCycleIndex = index;
+          card.classList.add("dragging");
+          event.dataTransfer.effectAllowed = "move";
+        });
+
+        card.addEventListener("dragend", () => {
+          draggedCycleIndex = null;
+          card.classList.remove("dragging");
+          document.querySelectorAll(".cycle-item").forEach((row) => row.classList.remove("drag-over"));
+        });
+
+        card.addEventListener("dragover", (event) => {
+          event.preventDefault();
+          if (draggedCycleIndex !== null && draggedCycleIndex !== index) {
+            card.classList.add("drag-over");
+          }
+        });
+
+        card.addEventListener("dragleave", () => card.classList.remove("drag-over"));
+
+        card.addEventListener("drop", (event) => {
+          event.preventDefault();
+          card.classList.remove("drag-over");
+          if (draggedCycleIndex === null || draggedCycleIndex === index) return;
+
+          const [moved] = state.cycles.splice(draggedCycleIndex, 1);
+          state.cycles.splice(index, 0, moved);
+          renderCycles();
+          saveState();
+        });
+
+        top.append(indexLabel, name, startWrap, endWrap, expand);
+        card.append(handle, top);
+
+        if (reportDay) {
+          const reportBadge = document.createElement("span");
+          reportBadge.className = "report-badge";
+          reportBadge.textContent = "Report day today";
+          card.append(reportBadge);
+        }
+
+        if (item.open) {
+          const detail = document.createElement("div");
+          detail.className = "cycle-detail";
+
+          const notes = document.createElement("textarea");
+          notes.className = "cycle-notes";
+          notes.placeholder = "Progress note: 4 videos, 3 done, 1 left...";
+          notes.value = item.notes || "";
+          notes.addEventListener("input", () => {
+            state.cycles[index].notes = notes.value;
+            saveState();
+          });
+
+          const actions = document.createElement("div");
+          actions.className = "cycle-detail-actions";
+          const addTodo = document.createElement("button");
+          addTodo.className = "primary";
+          addTodo.textContent = "Ask AI + Add";
+          addTodo.addEventListener("click", async () => {
+            const lines = notes.value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+            const existing = new Set(state.todos.map((todo) => todo.text.trim().toLowerCase()));
+            addTodo.disabled = true;
+            addTodo.textContent = "Thinking...";
+
+            for (const line of lines) {
+              let text = makeContextTask(item.name, line);
+              let result = {
+                task: text,
+                priority: "medium",
+                dependency: "none",
+                reason: "Created from the brand progress note"
+              };
+              try {
+                const answer = await makeAiTask(item.name, line);
+                text = answer.task || text;
+                result = { ...result, ...answer, task: text };
+              } catch {
+                // The local rule keeps task capture working if Ollama is not running.
+              }
+              state.cycles[index].aiResult = result;
+              if (!existing.has(text.toLowerCase())) {
+                state.todos.push({ text, done: false });
+                existing.add(text.toLowerCase());
+              }
+            }
+
+            addTodo.disabled = false;
+            addTodo.textContent = "Ask AI + Add";
+            renderTodos();
+            renderCycles();
+            saveState();
+          });
+
+          actions.appendChild(addTodo);
+          detail.append(notes, actions);
+
+          if (item.aiResult) {
+            const result = document.createElement("div");
+            result.className = "ai-result";
+            const task = document.createElement("strong");
+            task.textContent = `AI task: ${item.aiResult.task}`;
+            const metadata = document.createElement("span");
+            metadata.textContent = `Priority: ${item.aiResult.priority || "medium"} | Dependency: ${item.aiResult.dependency || "none"}`;
+            const reason = document.createElement("span");
+            reason.textContent = item.aiResult.reason || "";
+            result.append(task, metadata, reason);
+            detail.appendChild(result);
+          }
+          card.appendChild(detail);
+        }
+        host.appendChild(card);
+      });
+    }
+
+    function renderRules() {
+      const host = document.getElementById("ruleList");
+      host.innerHTML = "";
+
+      state.rules.forEach((rule, index) => {
+        const item = document.createElement("label");
+        item.className = `rule-item ${rule.done ? "complete" : ""}`;
+
+        const box = document.createElement("input");
+        box.type = "checkbox";
+        box.checked = rule.done;
+        box.addEventListener("change", () => {
+          state.rules[index].done = box.checked;
+          renderRules();
+          saveState();
+        });
+
+        const text = document.createElement("span");
+        text.className = "rule-text";
+        text.textContent = rule.text;
+        item.append(box, text);
+        host.appendChild(item);
+      });
+    }
+
+    function renderCampaigns() {
+      const host = document.getElementById("campaignList");
+      host.innerHTML = "";
+      state.campaigns.forEach((item, index) => {
+        const card = document.createElement("div");
+        const updateCampaignState = () => {
+          card.classList.toggle("campaign-active", Boolean(item.google || item.meta || item.tiktok));
+        };
+        card.className = "campaign-item";
+        updateCampaignState();
+
+        const handle = document.createElement("span");
+        handle.className = "drag-handle";
+        handle.draggable = true;
+        handle.textContent = "....";
+        handle.title = "Drag to reorder";
+
+        const top = document.createElement("div");
+        top.className = "campaign-top";
+
+        const brand = document.createElement("input");
+        brand.className = "field";
+        brand.placeholder = "Brand";
+        brand.value = item.brand;
+        brand.addEventListener("input", () => {
+          state.campaigns[index].brand = brand.value;
+          saveState();
+        });
+
+        const platforms = [
+          ["google", "Google"],
+          ["meta", "Meta"],
+          ["tiktok", "TikTok"]
+        ];
+
+        card.addEventListener("dragstart", (event) => {
+          draggedCampaignIndex = index;
+          card.classList.add("dragging");
+          event.dataTransfer.effectAllowed = "move";
+        });
+
+        card.addEventListener("dragend", () => {
+          draggedCampaignIndex = null;
+          card.classList.remove("dragging");
+          document.querySelectorAll(".campaign-item").forEach((row) => row.classList.remove("drag-over"));
+        });
+
+        card.addEventListener("dragover", (event) => {
+          event.preventDefault();
+          if (draggedCampaignIndex !== null && draggedCampaignIndex !== index) {
+            card.classList.add("drag-over");
+          }
+        });
+
+        card.addEventListener("dragleave", () => card.classList.remove("drag-over"));
+
+        card.addEventListener("drop", (event) => {
+          event.preventDefault();
+          card.classList.remove("drag-over");
+          if (draggedCampaignIndex === null || draggedCampaignIndex === index) return;
+
+          const [moved] = state.campaigns.splice(draggedCampaignIndex, 1);
+          state.campaigns.splice(index, 0, moved);
+          renderCampaigns();
+          saveState();
+        });
+
+        top.append(brand);
+        platforms.forEach(([key, labelText]) => {
+          const toggle = document.createElement("label");
+          toggle.className = `status-toggle platform-toggle ${key}`;
+
+          const active = document.createElement("input");
+          active.type = "checkbox";
+          active.checked = Boolean(item[key]);
+          active.addEventListener("change", () => {
+            state.campaigns[index][key] = active.checked;
+            updateCampaignState();
+            saveState();
+          });
+
+          const label = document.createElement("span");
+          label.textContent = labelText;
+          toggle.append(active, label);
+          top.append(toggle);
+        });
+        card.append(handle, top);
+        host.appendChild(card);
+      });
+    }
+
+    function renderActiveBrands() {
+      const host = document.getElementById("activeBrandList");
+      host.innerHTML = "";
+      state.activeBrands.forEach((item, index) => {
+        const card = document.createElement("div");
+        card.className = "active-item";
+
+        const top = document.createElement("div");
+        top.className = "active-top";
+
+        const name = document.createElement("input");
+        name.className = "field";
+        name.placeholder = "Brand";
+        name.value = item.name;
+        name.addEventListener("input", () => {
+          state.activeBrands[index].name = name.value;
+          saveState();
+        });
+
+        const status = document.createElement("select");
+        status.className = "select";
+        ["Active", "Watch"].forEach((option) => {
+          const el = document.createElement("option");
+          el.value = option;
+          el.textContent = option;
+          el.selected = option === item.status;
+          status.appendChild(el);
+        });
+        status.addEventListener("change", () => {
+          state.activeBrands[index].status = status.value;
+          saveState();
+        });
+
+        top.append(name, status);
+        card.append(top);
+        host.appendChild(card);
+      });
+    }
+
+    function renderBrandChecklist() {
+      const host = document.getElementById("brandChecklist");
+      host.innerHTML = "";
+      const keys = ["contentCalendar", "caption", "campaignSetup", "creatives16", "videos4", "designerCoordination", "report"];
+
+      state.brandChecklist.forEach((brand, index) => {
+        const row = document.createElement("div");
+        row.className = "brand-row";
+
+        const name = document.createElement("div");
+        name.className = "brand-name";
+        name.textContent = brand.name;
+        row.appendChild(name);
+
+        let done = 0;
+        keys.forEach((key) => {
+          const box = document.createElement("input");
+          box.type = "checkbox";
+          box.checked = Boolean(brand[key]);
+          if (brand[key]) done += 1;
+          box.addEventListener("change", () => {
+            state.brandChecklist[index][key] = box.checked;
+            updateSummary(true);
+            saveState();
+          });
+          row.appendChild(box);
+        });
+
+        const percent = document.createElement("div");
+        percent.className = "progress-pill";
+        const completion = Math.round((done / keys.length) * 100);
+        percent.textContent = `${completion}%`;
+        row.style.setProperty("--progress", `${completion}%`);
+        row.appendChild(percent);
+        host.appendChild(row);
+      });
+    }
+
+    function renderTodos() {
+      const host = document.getElementById("todoList");
+      host.innerHTML = "";
+      state.todos.forEach((item, index) => {
+        const row = document.createElement("div");
+        row.className = `todo-item ${item.done ? "done" : ""}`;
+
+        const box = document.createElement("input");
+        box.type = "checkbox";
+        box.checked = item.done;
+        box.addEventListener("change", () => {
+          state.todos[index].done = box.checked;
+          renderTodos();
+          saveState();
+        });
+
+        const input = document.createElement("input");
+        input.className = "todo-text";
+        input.value = item.text;
+        input.placeholder = "Task";
+        input.addEventListener("input", () => {
+          state.todos[index].text = input.value;
+          saveState();
+        });
+
+        const remove = document.createElement("button");
+        remove.textContent = "x";
+        remove.addEventListener("click", () => {
+          state.todos.splice(index, 1);
+          renderTodos();
+          saveState();
+        });
+
+        row.append(box, input, remove);
+        host.appendChild(row);
+      });
+    }
+
+    function getActiveNotePage() {
+      return state.notePages.find((page) => page.id === state.activeNotePageId) || state.notePages[0];
+    }
+
+    function renderNotePages() {
+      const select = document.getElementById("notePageSelect");
+      const notes = document.getElementById("notesArea");
+      const page = getActiveNotePage();
+
+      state.activeNotePageId = page.id;
+      select.innerHTML = "";
+      state.notePages.forEach((notePage) => {
+        const option = document.createElement("option");
+        option.value = notePage.id;
+        option.textContent = notePage.title;
+        option.selected = notePage.id === page.id;
+        select.appendChild(option);
+      });
+
+      notes.innerHTML = page.content;
+    }
+
+    function getActiveAiChat() {
+      return state.aiChats.find((chat) => chat.id === state.activeAiChatId) || state.aiChats[0];
+    }
+
+    function renderAiDesk() {
+      const chat = getActiveAiChat();
+      const list = document.getElementById("aiChatList");
+      const titleInput = document.getElementById("aiChatTitleInput");
+      const roleInput = document.getElementById("aiRoleInput");
+      const log = document.getElementById("aiChatLog");
+      const deleteButton = document.getElementById("deleteAiChat");
+      const sendButton = document.getElementById("sendAiCommand");
+      const isThinking = deskAiThinkingChatId === chat.id;
+
+      state.activeAiChatId = chat.id;
+      list.innerHTML = "";
+      state.aiChats.forEach((item) => {
+        const button = document.createElement("button");
+        const title = document.createElement("span");
+        const preview = document.createElement("span");
+        const lastMessage = item.messages[item.messages.length - 1];
+
+        button.className = `ai-chat-item${item.id === chat.id ? " active" : ""}`;
+        title.className = "ai-chat-title";
+        preview.className = "ai-chat-preview";
+        title.textContent = item.title;
+        preview.textContent = lastMessage?.content || "Empty conversation";
+        button.append(title, preview);
+        button.addEventListener("click", () => {
+          state.activeAiChatId = item.id;
+          renderAiDesk();
+          saveState();
+        });
+        list.appendChild(button);
+      });
+
+      titleInput.value = chat.title;
+      roleInput.value = chat.role;
+      deleteButton.disabled = state.aiChats.length === 1;
+      sendButton.disabled = Boolean(deskAiThinkingChatId);
+      sendButton.textContent = isThinking ? "Thinking" : "Send";
+      log.innerHTML = "";
+      chat.messages.forEach((message) => {
+        const bubble = document.createElement("div");
+        bubble.className = `ai-message ${message.role}`;
+        const label = document.createElement("span");
+        label.className = "ai-message-label";
+        label.textContent = message.role === "assistant" ? "Desk AI" : "You";
+        bubble.append(label, document.createTextNode(message.content));
+        log.appendChild(bubble);
+      });
+      if (isThinking) {
+        const thinking = document.createElement("div");
+        thinking.className = "ai-message assistant thinking";
+        thinking.textContent = "Desk AI is thinking";
+        log.appendChild(thinking);
+      }
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function getDirectTodoCommand(text) {
+      const patterns = [
+        /^(?:(?:can|could|would)\s+you\s+)?(?:please\s+)?(?:add|put)\s+(.+?)\s+(?:to|in|on)\s+(?:my\s+)?to-?do(?:\s+list)?[.!]?$/i,
+        /^(?:(?:can|could|would)\s+you\s+)?(?:please\s+)?(?:add|put)\s+(?:to\s+)?(?:my\s+)?to-?do(?:\s+list)?\s*[:\-]\s*(.+)$/i
+      ];
+      for (const pattern of patterns) {
+        const match = text.match(pattern);
+        if (match?.[1]) return match[1].trim().replace(/^["']|["']$/g, "");
+      }
+      return "";
+    }
+
+    function addTodoIfMissing(text) {
+      const cleanText = text.trim();
+      if (!cleanText) return false;
+      const duplicate = state.todos.some((todo) => todo.text.trim().toLowerCase() === cleanText.toLowerCase());
+      if (!duplicate) state.todos.push({ text: cleanText, done: false });
+      return !duplicate;
+    }
+
+    function getInstantDeskReply(text) {
+      const lower = text.toLowerCase().trim();
+      const openTodos = state.todos.filter((todo) => !todo.done).map((todo) => todo.text.trim()).filter(Boolean);
+
+      if (/^(hi|hello|hey|yo|good morning|good afternoon)[.!?]*$/i.test(text.trim())) {
+        return "Desk AI is awake. What are we untangling first?";
+      }
+
+      if (/what can you do|what features|your capabilities|command center features/i.test(lower)) {
+        return "I can operate your Command Center: switch Google, Meta, or TikTok campaigns; update all seven brand checklist items; add or update brand notes and cycle dates; add, complete, reopen, or remove tasks; mark daily rules; create notes pages; add brands; and start, pause, or reset the Pomodoro timer. I can also read the live dashboard, prioritise work, plan, write, and follow a different role in each chat.";
+      }
+
+      if (/(?:show|list|what).*(?:to-?do|tasks?)|what do i have to do/i.test(lower)) {
+        if (!openTodos.length) return "Your To-do List is clear. Suspiciously peaceful, but clear.";
+        return `Open tasks:\n${openTodos.map((todo, index) => `${index + 1}. ${todo}`).join("\n")}`;
+      }
+
+      if (/plan (?:my )?(?:day|today)|today'?s plan/i.test(lower)) {
+        if (!openTodos.length) return "No open tasks yet. Add the real work first, then I can build a useful plan instead of decorative nonsense.";
+        return `Today's plan:\n${openTodos.slice(0, 3).map((todo, index) => `${index + 1}. ${todo}`).join("\n")}`;
+      }
+
+      if (/what should i (?:do|focus on)|what.*first|next action|prioriti[sz]e/i.test(lower)) {
+        if (openTodos.length) return `Start with: ${openTodos[0]}. One task, finish it, then come back.`;
+        const cycleWithNote = state.cycles.find((cycle) => cycle.notes?.trim());
+        if (cycleWithNote) return `Start with ${cycleWithNote.name}: ${cycleWithNote.notes.trim()}`;
+        return "Your dashboard has no open task or brand note to prioritise yet. Add the actual pending work and I'll choose the first move.";
+      }
+
+      if (/(?:which|what|show|list).*(?:active campaigns?|campaigns? active)/i.test(lower)) {
+        const active = state.campaigns
+          .filter((campaign) => campaign.google || campaign.meta || campaign.tiktok)
+          .map((campaign) => {
+            const platforms = [campaign.google && "Google", campaign.meta && "Meta", campaign.tiktok && "TikTok"].filter(Boolean);
+            return `${campaign.brand}: ${platforms.join(", ")}`;
+          });
+        return active.length ? `Active campaigns:\n${active.join("\n")}` : "No campaign platform is switched on right now.";
+      }
+
+      return "";
+    }
+
+    function normalizeAgentValue(value) {
+      return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    }
+
+    function findAgentMatch(items, field, value) {
+      const target = normalizeAgentValue(value);
+      if (!target) return null;
+      return items.find((item) => normalizeAgentValue(item[field]) === target)
+        || items.find((item) => {
+          const candidate = normalizeAgentValue(item[field]);
+          return candidate.includes(target) || target.includes(candidate);
+        })
+        || null;
+    }
+
+    function plainTextFromHtml(html) {
+      const element = document.createElement("div");
+      element.innerHTML = html || "";
+      return element.innerText.trim();
+    }
+
+    function escapeAgentHtml(text) {
+      const element = document.createElement("div");
+      element.textContent = text || "";
+      return element.innerHTML.replace(/\n/g, "<br>");
+    }
+
+    function applyDeskAiAction(action) {
+      const type = action?.type;
+
+      if (type === "add_todo") {
+        const added = addTodoIfMissing(action.text || "");
+        return added ? `Added task: ${action.text}` : `Task already exists: ${action.text}`;
+      }
+
+      if (type === "set_todo_status") {
+        const todo = findAgentMatch(state.todos, "text", action.text);
+        if (!todo) return `Could not find task: ${action.text}`;
+        todo.done = Boolean(action.done);
+        return `${todo.done ? "Completed" : "Reopened"} task: ${todo.text}`;
+      }
+
+      if (type === "delete_todo") {
+        const todo = findAgentMatch(state.todos, "text", action.text);
+        if (!todo) return `Could not find task: ${action.text}`;
+        state.todos.splice(state.todos.indexOf(todo), 1);
+        return `Removed task: ${todo.text}`;
+      }
+
+      if (type === "set_campaign_platform") {
+        const platform = String(action.platform || "").toLowerCase();
+        if (!["google", "meta", "tiktok"].includes(platform)) return `Unsupported campaign platform: ${action.platform}`;
+        let campaign = findAgentMatch(state.campaigns, "brand", action.brand);
+        if (!campaign) {
+          const knownBrand = findAgentMatch(state.cycles, "name", action.brand)
+            || findAgentMatch(state.brandChecklist, "name", action.brand);
+          if (!knownBrand) return `Could not find brand: ${action.brand}`;
+          campaign = makeCampaign(knownBrand.name);
+          state.campaigns.push(campaign);
+        }
+        campaign[platform] = Boolean(action.active);
+        return `${platform[0].toUpperCase()}${platform.slice(1)} turned ${campaign[platform] ? "on" : "off"} for ${campaign.brand}`;
+      }
+
+      if (type === "set_brand_note") {
+        let cycle = findAgentMatch(state.cycles, "name", action.brand);
+        if (!cycle) return `Could not find brand cycle: ${action.brand}`;
+        const note = String(action.text || "").trim();
+        if (!note) return `No note supplied for ${cycle.name}`;
+        cycle.notes = action.mode === "replace" || !cycle.notes.trim() ? note : `${cycle.notes.trim()}\n${note}`;
+        cycle.open = true;
+        return `${action.mode === "replace" ? "Updated" : "Added"} note for ${cycle.name}`;
+      }
+
+      if (type === "set_checklist_item") {
+        const allowed = ["contentCalendar", "caption", "campaignSetup", "creatives16", "videos4", "designerCoordination", "report"];
+        if (!allowed.includes(action.item)) return `Unsupported checklist item: ${action.item}`;
+        const brand = findAgentMatch(state.brandChecklist, "name", action.brand);
+        if (!brand) return `Could not find checklist brand: ${action.brand}`;
+        brand[action.item] = Boolean(action.done);
+        return `${action.item} marked ${brand[action.item] ? "done" : "pending"} for ${brand.name}`;
+      }
+
+      if (type === "set_cycle") {
+        const cycle = findAgentMatch(state.cycles, "name", action.brand);
+        if (!cycle) return `Could not find brand cycle: ${action.brand}`;
+        if (String(action.start || "").trim()) cycle.start = String(action.start).trim();
+        if (String(action.end || "").trim()) cycle.end = String(action.end).trim();
+        return `Cycle updated for ${cycle.name}: ${cycle.start}-${cycle.end}`;
+      }
+
+      if (type === "set_rule_status") {
+        const rule = findAgentMatch(state.rules, "text", action.text);
+        if (!rule) return `Could not find rule: ${action.text}`;
+        rule.done = Boolean(action.done);
+        return `Rule marked ${rule.done ? "done" : "pending"}: ${rule.text}`;
+      }
+
+      if (type === "timer") {
+        if (action.operation === "start") startTimer();
+        else if (action.operation === "pause") pauseTimer();
+        else if (action.operation === "reset") resetTimer();
+        else return `Unsupported timer operation: ${action.operation}`;
+        return `Timer ${action.operation} applied`;
+      }
+
+      if (type === "add_brand") {
+        const brand = String(action.brand || "").trim();
+        if (!brand) return "No brand name supplied";
+        if (!findAgentMatch(state.cycles, "name", brand)) state.cycles.push(makeCycle(brand));
+        if (!findAgentMatch(state.brandChecklist, "name", brand)) state.brandChecklist.push(makeBrandRow(brand));
+        if (!findAgentMatch(state.campaigns, "brand", brand)) state.campaigns.push(makeCampaign(brand));
+        return `Added brand: ${brand}`;
+      }
+
+      if (type === "create_note_page") {
+        const title = String(action.title || "New page").trim() || "New page";
+        const page = {
+          id: `page-${Date.now()}`,
+          title,
+          content: escapeAgentHtml(String(action.content || ""))
+        };
+        state.notePages.push(page);
+        state.activeNotePageId = page.id;
+        return `Created notes page: ${title}`;
+      }
+
+      return `Ignored unsupported action: ${type || "unknown"}`;
+    }
+
+    function applyDeskAiActions(actions) {
+      const results = (actions || []).map(applyDeskAiAction);
+      if (!results.length) return results;
+      renderRules();
+      renderCycles();
+      renderCampaigns();
+      renderTodos();
+      renderBrandChecklist();
+      renderNotePages();
+      updateSummary(true);
+      saveState();
+      return results;
+    }
+
+    function deskDashboardContext() {
+      return {
+        features: {
+          timer: ["start", "pause", "reset"],
+          rules: ["mark done", "mark pending"],
+          todos: ["add", "complete", "reopen", "remove"],
+          notes: ["create page"],
+          checklist: ["contentCalendar", "caption", "campaignSetup", "creatives16", "videos4", "designerCoordination", "report"],
+          cycles: ["change dates", "append or replace brand note"],
+          campaigns: ["switch Google, Meta, or TikTok on or off"],
+          brands: ["add brand"]
+        },
+        timer: {
+          secondsRemaining: state.timerSeconds,
+          running: Boolean(timerInterval)
+        },
+        cycles: state.cycles.map((cycle) => ({
+          brand: cycle.name,
+          cycle: `${cycle.start}-${cycle.end}`,
+          note: cycle.notes || ""
+        })),
+        campaigns: state.campaigns.map((campaign) => ({
+          brand: campaign.brand,
+          google: Boolean(campaign.google),
+          meta: Boolean(campaign.meta),
+          tiktok: Boolean(campaign.tiktok)
+        })),
+        checklist: state.brandChecklist.map((brand) => ({
+          brand: brand.name,
+          contentCalendar: Boolean(brand.contentCalendar),
+          caption: Boolean(brand.caption),
+          campaignSetup: Boolean(brand.campaignSetup),
+          creatives16: Boolean(brand.creatives16),
+          videos4: Boolean(brand.videos4),
+          designerCoordination: Boolean(brand.designerCoordination),
+          report: Boolean(brand.report)
+        })),
+        todos: state.todos.map((todo) => ({ text: todo.text, done: Boolean(todo.done) })),
+        rules: state.rules.map((rule) => ({ text: rule.text, done: Boolean(rule.done) })),
+        notePages: state.notePages.map((page) => ({ title: page.title, content: plainTextFromHtml(page.content) }))
+      };
+    }
+
+    async function checkDeskAiStatus() {
+      const status = document.getElementById("deskAiStatus");
+      try {
+        const response = await fetch("http://127.0.0.1:8766/api/status");
+        if (!response.ok) throw new Error("Bridge unavailable");
+        const result = await response.json();
+        const memoryLabel = result.memory === "supermemory" ? "Supermemory" : "Local memory";
+        status.textContent = result.ollama ? `Ollama online | ${memoryLabel}` : `Ollama offline | ${memoryLabel}`;
+      } catch {
+        status.textContent = "Bridge offline";
+      }
+    }
+
+    function rememberDeskTurn(chat, userText, assistantText, actions = []) {
+      fetch("http://127.0.0.1:8766/api/remember", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chat.id,
+          chat_title: chat.title,
+          role: chat.role,
+          message: userText,
+          reply: assistantText,
+          actions
+        })
+      }).catch(() => {});
+    }
+
+    function syncExistingChatMemory() {
+      state.aiChats.forEach((chat) => {
+        chat.messages.forEach((message, index) => {
+          if (message.role !== "user") return;
+          const answer = chat.messages.slice(index + 1).find((item) => item.role === "assistant");
+          if (answer) rememberDeskTurn(chat, message.content, answer.content);
+        });
+      });
+    }
+
+    async function connectSupermemory() {
+      const apiKey = window.prompt("Paste your Supermemory API key. It will be stored only in the local Command Center data folder.");
+      if (!apiKey?.trim()) return;
+      const status = document.getElementById("deskAiStatus");
+      status.textContent = "Connecting memory...";
+      try {
+        const response = await fetch("http://127.0.0.1:8766/api/memory-key", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ api_key: apiKey.trim() })
+        });
+        const result = await response.json();
+        status.textContent = result.connected ? "Ollama online | Supermemory" : result.message;
+      } catch {
+        status.textContent = "Could not connect Supermemory";
+      }
+    }
+
+    async function sendDeskAiCommand() {
+      if (deskAiThinkingChatId) return;
+      const input = document.getElementById("aiCommandInput");
+      const text = input.value.trim();
+      if (!text) return;
+
+      const chat = getActiveAiChat();
+      chat.messages.push({ role: "user", content: text });
+      if (/^Desk AI(?: \d+)?$|^New chat$/i.test(chat.title)) {
+        chat.title = text.length > 34 ? `${text.slice(0, 34).trim()}...` : text;
+      }
+      input.value = "";
+      renderAiDesk();
+      saveState();
+
+      const directTodo = getDirectTodoCommand(text);
+      if (directTodo) {
+        const added = addTodoIfMissing(directTodo);
+        const reply = added
+          ? `Added "${directTodo}" to your To-do List. Miraculous: the task now exists outside your head.`
+          : `"${directTodo}" is already in your To-do List. Duplicating it will not make it finish itself.`;
+        chat.messages.push({ role: "assistant", content: reply });
+        rememberDeskTurn(chat, text, reply, added ? [{ type: "add_todo", text: directTodo }] : []);
+        renderTodos();
+        renderAiDesk();
+        saveState();
+        return;
+      }
+
+      const instantReply = getInstantDeskReply(text);
+      if (instantReply) {
+        chat.messages.push({ role: "assistant", content: instantReply });
+        rememberDeskTurn(chat, text, instantReply);
+        renderAiDesk();
+        saveState();
+        return;
+      }
+
+      deskAiThinkingChatId = chat.id;
+      document.getElementById("deskAiStatus").textContent = "Thinking...";
+      renderAiDesk();
+
+      try {
+        const response = await fetch("http://127.0.0.1:8766/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chat.id,
+            chat_title: chat.title,
+            role: chat.role,
+            message: text,
+            history: chat.messages,
+            dashboard: deskDashboardContext()
+          })
+        });
+        if (!response.ok) {
+          const failure = await response.json().catch(() => ({}));
+          throw new Error(failure.error || "Desk AI request failed");
+        }
+        const result = await response.json();
+        const actionResults = applyDeskAiActions(result.actions || []);
+        const appliedText = actionResults.length ? `\n\nApplied:\n${actionResults.map((item) => `- ${item}`).join("\n")}` : "";
+        chat.messages.push({ role: "assistant", content: `${result.reply || "I could not prepare a response."}${appliedText}` });
+      } catch (error) {
+        const offline = !navigator.onLine ? "The browser is offline." : "The local AI request failed.";
+        chat.messages.push({ role: "assistant", content: `${offline} ${error.message || "Check the bridge status above."}` });
+      } finally {
+        deskAiThinkingChatId = "";
+        document.getElementById("deskAiStatus").textContent = "Local AI brain";
+      }
+
+      renderAiDesk();
+      saveState();
+    }
+
+    function makeTasksFromNotes() {
+      const lines = document.getElementById("notesArea").innerText
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+      if (!lines.length) return;
+
+      const existing = new Set(state.todos.map((item) => item.text.trim().toLowerCase()));
+      lines.forEach((line) => {
+        const key = line.toLowerCase();
+        if (!existing.has(key)) {
+          state.todos.push({ text: line, done: false });
+          existing.add(key);
+        }
+      });
+
+      const page = getActiveNotePage();
+      page.content = "";
+      state.notes = "";
+      document.getElementById("notesArea").innerHTML = "";
+      renderTodos();
+      saveState();
+    }
+
+    function updateSummary(animate) {
+      const keys = ["contentCalendar", "caption", "campaignSetup", "creatives16", "videos4", "designerCoordination", "report"];
+      const total = state.brandChecklist.length * keys.length;
+      const done = state.brandChecklist.reduce((sum, brand) => {
+        return sum + keys.reduce((inner, key) => inner + (brand[key] ? 1 : 0), 0);
+      }, 0);
+      const pending = Math.max(total - done, 0);
+      const percent = total ? Math.round((done / total) * 100) : 0;
+      const degrees = total ? Math.round((done / total) * 360) : 0;
+
+      const pie = document.getElementById("pieChart");
+      pie.style.background = `conic-gradient(var(--accent) 0deg ${degrees}deg, var(--accent-deep) ${degrees}deg 360deg)`;
+      document.getElementById("pieValue").textContent = `${percent}%`;
+      document.getElementById("completionText").textContent = `${done} of ${total} items done`;
+      document.getElementById("doneCount").textContent = String(done);
+      document.getElementById("pendingCount").textContent = String(pending);
+
+      if (animate) {
+        pie.animate(
+          [
+            { transform: "scale(0.98)" },
+            { transform: "scale(1.03)" },
+            { transform: "scale(1)" }
+          ],
+          { duration: 260, easing: "ease-out" }
+        );
+      }
+
+      renderBrandChecklist();
+    }
+
+    function updateTimerDisplay() {
+      const minutes = Math.floor(state.timerSeconds / 60);
+      const seconds = state.timerSeconds % 60;
+      document.getElementById("timerDisplay").textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    }
+
+    function startTimer() {
+      if (timerInterval) return;
+      document.getElementById("timerStatus").textContent = "Running";
+      timerInterval = setInterval(() => {
+        if (state.timerSeconds > 0) {
+          state.timerSeconds -= 1;
+          updateTimerDisplay();
+          saveState();
+        } else {
+          pauseTimer();
+          document.getElementById("timerStatus").textContent = "Finished";
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      document.getElementById("timerStatus").textContent = "Paused";
+      saveState();
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      state.timerSeconds = 1500;
+      updateTimerDisplay();
+      document.getElementById("timerStatus").textContent = "Focus session";
+      saveState();
+    }
+
+    function renderAll() {
+      renderNotePages();
+      renderAiDesk();
+      renderRules();
+      renderCycles();
+      renderCampaigns();
+      renderTodos();
+      renderBrandChecklist();
+      updateSummary(false);
+      updateTimerDisplay();
+    }
+
+    function arrangeDashboard() {
+      const dashboard = document.getElementById("dashboard");
+      if (dashboard.querySelector(".dashboard-column")) return;
+
+      const makeColumn = (className, sections) => {
+        const column = document.createElement("div");
+        column.className = `dashboard-column ${className}`;
+        sections.forEach((section) => column.appendChild(document.querySelector(section)));
+        return column;
+      };
+
+      dashboard.append(
+        makeColumn("left-column", [".top-left", ".todo-panel", ".bottom-left"]),
+        makeColumn("middle-column", [".top-center", ".bottom-center", ".campaigns-panel"]),
+        makeColumn("right-column", [".top-right"]),
+        document.querySelector(".ai-desk")
+      );
+    }
+
+    document.getElementById("todayLabel").textContent = new Date().toLocaleDateString([], {
+      weekday: "short",
+      month: "short",
+      day: "numeric"
+    });
+
+    document.getElementById("notesArea").addEventListener("input", (event) => {
+      const page = getActiveNotePage();
+      page.content = event.target.innerHTML;
+      state.notes = page.content;
+      saveState();
+    });
+
+    function applyNoteFormat(command) {
+      const notes = document.getElementById("notesArea");
+      notes.focus();
+      document.execCommand(command, false, null);
+      notes.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
+    document.getElementById("boldNote").addEventListener("click", () => applyNoteFormat("bold"));
+    document.getElementById("italicNote").addEventListener("click", () => applyNoteFormat("italic"));
+    document.getElementById("bulletNote").addEventListener("click", () => applyNoteFormat("insertUnorderedList"));
+
+    document.getElementById("notePageSelect").addEventListener("change", (event) => {
+      state.activeNotePageId = event.target.value;
+      renderNotePages();
+      saveState();
+    });
+
+    document.getElementById("addNotePage").addEventListener("click", () => {
+      const number = state.notePages.length + 1;
+      const page = { id: `page-${Date.now()}`, title: `Page ${number}`, content: "" };
+      state.notePages.push(page);
+      state.activeNotePageId = page.id;
+      renderNotePages();
+      saveState();
+      document.getElementById("notesArea").focus();
+    });
+
+    document.getElementById("deleteNotePage").addEventListener("click", () => {
+      if (state.notePages.length === 1) return;
+      state.notePages = state.notePages.filter((page) => page.id !== state.activeNotePageId);
+      state.activeNotePageId = state.notePages[0].id;
+      renderNotePages();
+      saveState();
+    });
+
+    document.getElementById("aiChatTitleInput").addEventListener("input", (event) => {
+      getActiveAiChat().title = event.target.value.trimStart() || "Untitled chat";
+      renderAiDesk();
+      document.getElementById("aiChatTitleInput").focus();
+      saveState();
+    });
+
+    document.getElementById("aiRoleInput").addEventListener("input", (event) => {
+      getActiveAiChat().role = event.target.value;
+      saveState();
+    });
+
+    document.getElementById("connectMemory").addEventListener("click", connectSupermemory);
+
+    document.getElementById("addAiChat").addEventListener("click", () => {
+      const count = state.aiChats.length + 1;
+      const chat = {
+        id: `desk-ai-${Date.now()}`,
+        title: `New chat`,
+        role: "Command Center operations copilot",
+        messages: [{ role: "assistant", content: "New chat ready. I can operate campaigns, checklists, brand cycles, notes, tasks, rules, and the timer. Tell me what to change, or give this chat a role." }]
+      };
+      state.aiChats.push(chat);
+      state.activeAiChatId = chat.id;
+      renderAiDesk();
+      saveState();
+    });
+
+    document.getElementById("deleteAiChat").addEventListener("click", () => {
+      if (state.aiChats.length === 1) return;
+      state.aiChats = state.aiChats.filter((chat) => chat.id !== state.activeAiChatId);
+      state.activeAiChatId = state.aiChats[0].id;
+      renderAiDesk();
+      saveState();
+    });
+
+    document.getElementById("sendAiCommand").addEventListener("click", sendDeskAiCommand);
+    document.getElementById("aiCommandInput").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") sendDeskAiCommand();
+    });
+
+    document.getElementById("makeNotesTodo").addEventListener("click", makeTasksFromNotes);
+
+    document.getElementById("addCycle").addEventListener("click", () => {
+      state.cycles.push(makeCycle(""));
+      renderCycles();
+      saveState();
+    });
+
+    document.getElementById("addCampaign").addEventListener("click", () => {
+      state.campaigns.push(makeCampaign(""));
+      renderCampaigns();
+      saveState();
+    });
+
+    document.getElementById("startTimer").addEventListener("click", startTimer);
+    document.getElementById("pauseTimer").addEventListener("click", pauseTimer);
+    document.getElementById("resetTimer").addEventListener("click", resetTimer);
+
+    const doodleCanvas = document.getElementById("doodleLayer");
+    const doodleContext = doodleCanvas.getContext("2d");
+    const drawControls = document.querySelector(".draw-controls");
+    const drawMoveHandle = document.getElementById("drawMoveHandle");
+    const drawToggle = document.getElementById("drawToggle");
+    const drawColor = document.getElementById("drawColor");
+    const drawSize = document.getElementById("drawSize");
+    let drawing = false;
+    let lastPoint = null;
+    let strokeMoved = false;
+    let doodleHistory = [];
+    let toolbarDrag = null;
+
+    function placeDrawToolbar(x, y, persist = false) {
+      const maxX = Math.max(8, window.innerWidth - drawControls.offsetWidth - 8);
+      const maxY = Math.max(8, window.innerHeight - drawControls.offsetHeight - 8);
+      const nextX = Math.min(Math.max(8, x), maxX);
+      const nextY = Math.min(Math.max(8, y), maxY);
+      drawControls.style.left = `${nextX}px`;
+      drawControls.style.top = `${nextY}px`;
+      drawControls.style.right = "auto";
+      drawControls.style.bottom = "auto";
+      if (persist) {
+        state.drawToolbar = { x: nextX, y: nextY };
+        saveState();
+      }
+    }
+
+    function restoreDrawToolbar() {
+      const position = state.drawToolbar || {};
+      if (Number.isFinite(position.x) && Number.isFinite(position.y)) {
+        placeDrawToolbar(position.x, position.y);
+      }
+    }
+
+    function restoreDoodle() {
+      doodleCanvas.width = window.innerWidth;
+      doodleCanvas.height = window.innerHeight;
+      doodleHistory = state.doodle ? [state.doodle] : [];
+      paintDoodle(state.doodle);
+    }
+
+    function paintDoodle(data) {
+      doodleContext.clearRect(0, 0, doodleCanvas.width, doodleCanvas.height);
+      if (!data) return;
+
+      const image = new Image();
+      image.onload = () => doodleContext.drawImage(image, 0, 0, doodleCanvas.width, doodleCanvas.height);
+      image.src = data;
+    }
+
+    function pointFromEvent(event) {
+      return { x: event.clientX, y: event.clientY };
+    }
+
+    function drawLine(from, to) {
+      doodleContext.strokeStyle = drawColor.value;
+      doodleContext.lineWidth = Number(drawSize.value);
+      doodleContext.lineCap = "round";
+      doodleContext.lineJoin = "round";
+      doodleContext.beginPath();
+      doodleContext.moveTo(from.x, from.y);
+      const midpoint = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
+      doodleContext.quadraticCurveTo(from.x, from.y, midpoint.x, midpoint.y);
+      doodleContext.stroke();
+      return midpoint;
+    }
+
+    function saveDoodle() {
+      state.doodle = doodleCanvas.toDataURL("image/png");
+      doodleHistory.push(state.doodle);
+      saveState();
+    }
+
+    function undoDoodle() {
+      if (!doodleHistory.length) return;
+      doodleHistory.pop();
+      state.doodle = doodleHistory[doodleHistory.length - 1] || "";
+      paintDoodle(state.doodle);
+      saveState();
+    }
+
+    drawToggle.addEventListener("click", () => {
+      const enabled = doodleCanvas.classList.toggle("enabled");
+      drawControls.classList.toggle("expanded", enabled);
+      drawToggle.classList.toggle("primary", enabled);
+      drawToggle.textContent = enabled ? "Drawing" : "Pencil";
+      requestAnimationFrame(() => {
+        const rect = drawControls.getBoundingClientRect();
+        placeDrawToolbar(rect.left, rect.top, true);
+      });
+    });
+
+    drawMoveHandle.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      const rect = drawControls.getBoundingClientRect();
+      toolbarDrag = { offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top };
+      drawMoveHandle.setPointerCapture(event.pointerId);
+    });
+
+    drawMoveHandle.addEventListener("pointermove", (event) => {
+      if (!toolbarDrag) return;
+      placeDrawToolbar(event.clientX - toolbarDrag.offsetX, event.clientY - toolbarDrag.offsetY);
+    });
+
+    drawMoveHandle.addEventListener("pointerup", (event) => {
+      if (!toolbarDrag) return;
+      const rect = drawControls.getBoundingClientRect();
+      toolbarDrag = null;
+      drawMoveHandle.releasePointerCapture(event.pointerId);
+      placeDrawToolbar(rect.left, rect.top, true);
+    });
+
+    doodleCanvas.addEventListener("pointerdown", (event) => {
+      drawing = true;
+      lastPoint = pointFromEvent(event);
+      strokeMoved = false;
+      doodleCanvas.setPointerCapture(event.pointerId);
+    });
+
+    doodleCanvas.addEventListener("pointermove", (event) => {
+      if (!drawing) return;
+      const nextPoint = pointFromEvent(event);
+      lastPoint = drawLine(lastPoint, nextPoint);
+      strokeMoved = true;
+    });
+
+    doodleCanvas.addEventListener("pointerup", () => {
+      if (!drawing) return;
+      if (!strokeMoved && lastPoint) {
+        drawLine(lastPoint, { x: lastPoint.x + 0.1, y: lastPoint.y + 0.1 });
+      }
+      drawing = false;
+      lastPoint = null;
+      saveDoodle();
+    });
+
+    document.getElementById("clearDrawing").addEventListener("click", () => {
+      doodleContext.clearRect(0, 0, doodleCanvas.width, doodleCanvas.height);
+      state.doodle = "";
+      doodleHistory = [];
+      saveState();
+    });
+
+    document.getElementById("undoDrawing").addEventListener("click", undoDoodle);
+    window.addEventListener("keydown", (event) => {
+      if (event.ctrlKey && event.key.toLowerCase() === "z" && doodleCanvas.classList.contains("enabled")) {
+        event.preventDefault();
+        undoDoodle();
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      restoreDoodle();
+      restoreDrawToolbar();
+    });
+
+    arrangeDashboard();
+    renderAll();
+    restoreDoodle();
+    restoreDrawToolbar();
+    checkDeskAiStatus();
+    window.setInterval(checkDeskAiStatus, 30000);
+    loadDesktopFile();
+    window.setTimeout(syncExistingChatMemory, 1200);
+  </script>
+</body>
+</html>

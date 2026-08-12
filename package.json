@@ -1,0 +1,12 @@
+{
+  "name": "command-center",
+  "version": "1.0.0",
+  "description": "A desktop command center for brand, campaign, and content work.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^37.0.0"
+  }
+}
