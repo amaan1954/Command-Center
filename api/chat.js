@@ -34,7 +34,7 @@ If the request has typos, infer the closest valid brand/platform/action from con
 If you are unsure between two real dashboard options, ask one short clarification question instead of making a risky change.
 `;
 
-    const result = await askGemini(prompt, { maxOutputTokens: 520, temperature: 0.3 });
+    const result = await askGemini(prompt, { max_output_tokens: 520, temperature: 0.3 });
     jsonResponse(res, 200, {
       reply: String(result.reply || "I got the request, but my answer came back suspiciously blank."),
       actions: Array.isArray(result.actions) ? result.actions : []
