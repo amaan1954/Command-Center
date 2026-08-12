@@ -1381,6 +1381,7 @@
 
   <script>
     const STORAGE_KEY = "command-center-fixed-v3";
+    const AI_BASE_URL = window.location.protocol === "file:" ? "http://127.0.0.1:8766" : "";
 
     const brandDefaults = [
       "KL Mobile Events",
@@ -1495,7 +1496,7 @@
         .map((todo) => todo.text)
         .join(" | ") || "none";
 
-      const response = await fetch("http://127.0.0.1:8766/api/smart-task", {
+      const response = await fetch(`${AI_BASE_URL}/api/smart-task`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -2435,18 +2436,22 @@
     async function checkDeskAiStatus() {
       const status = document.getElementById("deskAiStatus");
       try {
-        const response = await fetch("http://127.0.0.1:8766/api/status");
+        const response = await fetch(`${AI_BASE_URL}/api/status`);
         if (!response.ok) throw new Error("Bridge unavailable");
         const result = await response.json();
+        if (result.provider === "gemini") {
+          status.textContent = result.ready ? "Gemini online | Vercel" : "Gemini key missing";
+          return;
+        }
         const memoryLabel = result.memory === "supermemory" ? "Supermemory" : "Local memory";
         status.textContent = result.ollama ? `Ollama online | ${memoryLabel}` : `Ollama offline | ${memoryLabel}`;
       } catch {
-        status.textContent = "Bridge offline";
+        status.textContent = window.location.protocol === "file:" ? "Bridge offline" : "Desk AI offline";
       }
     }
 
     function rememberDeskTurn(chat, userText, assistantText, actions = []) {
-      fetch("http://127.0.0.1:8766/api/remember", {
+      fetch(`${AI_BASE_URL}/api/remember`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -2476,7 +2481,7 @@
       const status = document.getElementById("deskAiStatus");
       status.textContent = "Connecting memory...";
       try {
-        const response = await fetch("http://127.0.0.1:8766/api/memory-key", {
+        const response = await fetch(`${AI_BASE_URL}/api/memory-key`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ api_key: apiKey.trim() })
@@ -2531,7 +2536,7 @@
       renderAiDesk();
 
       try {
-        const response = await fetch("http://127.0.0.1:8766/api/chat", {
+        const response = await fetch(`${AI_BASE_URL}/api/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -2552,11 +2557,11 @@
         const appliedText = actionResults.length ? `\n\nApplied:\n${actionResults.map((item) => `- ${item}`).join("\n")}` : "";
         chat.messages.push({ role: "assistant", content: `${result.reply || "I could not prepare a response."}${appliedText}` });
       } catch (error) {
-        const offline = !navigator.onLine ? "The browser is offline." : "The local AI request failed.";
+        const offline = !navigator.onLine ? "The browser is offline." : "Desk AI request failed.";
         chat.messages.push({ role: "assistant", content: `${offline} ${error.message || "Check the bridge status above."}` });
       } finally {
         deskAiThinkingChatId = "";
-        document.getElementById("deskAiStatus").textContent = "Local AI brain";
+        document.getElementById("deskAiStatus").textContent = window.location.protocol === "file:" ? "Local AI brain" : "Gemini online | Vercel";
       }
 
       renderAiDesk();
