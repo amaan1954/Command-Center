@@ -29,7 +29,7 @@ Brand context:
 ${compact(body, 5000)}
 `;
 
-    const result = await askGemini(prompt, { maxOutputTokens: 260, temperature: 0.2 });
+    const result = await askGemini(prompt, { max_output_tokens: 260, temperature: 0.2 });
     jsonResponse(res, 200, {
       task: String(result.task || ""),
       priority: result.priority || "medium",

@@ -1,5 +1,5 @@
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
+const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/interactions";
 
 const SYSTEM_CONTEXT = `
 You are Desk AI, the AI brain inside Amaan's Command Center.
@@ -101,6 +101,20 @@ function extractJson(text) {
   }
 }
 
+function outputTextFromInteraction(payload) {
+  if (payload.output_text) return payload.output_text;
+  const steps = Array.isArray(payload.steps) ? payload.steps : [];
+  for (let index = steps.length - 1; index >= 0; index -= 1) {
+    const content = steps[index]?.content;
+    if (typeof content === "string") return content;
+    if (Array.isArray(content)) {
+      const text = content.map((item) => item.text || item.content || "").join("").trim();
+      if (text) return text;
+    }
+  }
+  return "";
+}
+
 async function askGemini(prompt, generationConfig = {}) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -109,20 +123,21 @@ async function askGemini(prompt, generationConfig = {}) {
     throw error;
   }
 
-  const response = await fetch(`${GEMINI_URL}?key=${encodeURIComponent(apiKey)}`, {
+  const response = await fetch(GEMINI_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": apiKey
+    },
     body: JSON.stringify({
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: prompt }]
-        }
-      ],
-      generationConfig: {
+      model: GEMINI_MODEL,
+      system_instruction: "Return only JSON. You are connected to a dashboard action layer; action JSON changes the UI.",
+      input: prompt,
+      store: false,
+      generation_config: {
         temperature: 0.35,
-        maxOutputTokens: 700,
-        responseMimeType: "application/json",
+        max_output_tokens: 700,
+        thinking_level: "low",
         ...generationConfig
       }
     })
@@ -136,7 +151,7 @@ async function askGemini(prompt, generationConfig = {}) {
     throw error;
   }
 
-  const text = payload.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("").trim();
+  const text = outputTextFromInteraction(payload).trim();
   if (!text) throw new Error("Gemini returned an empty response");
   return extractJson(text);
 }
