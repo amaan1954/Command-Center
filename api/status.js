@@ -5,6 +5,6 @@ module.exports = function handler(req, res) {
     provider: "gemini",
     ready: Boolean(process.env.GEMINI_API_KEY),
     memory: "browser",
-    model: process.env.GEMINI_MODEL || "gemini-1.5-flash"
+    model: process.env.GEMINI_MODEL || "gemini-2.5-flash"
   });
 };
