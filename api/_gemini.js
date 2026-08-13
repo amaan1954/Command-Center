@@ -1,5 +1,8 @@
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
 const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/interactions";
+const AI_PROVIDER = (process.env.AI_PROVIDER || "gemini").toLowerCase();
+const OMNIROUTE_BASE_URL = (process.env.OMNIROUTE_BASE_URL || "http://127.0.0.1:20128/v1").replace(/\/$/, "");
+const OMNIROUTE_MODEL = process.env.OMNIROUTE_MODEL || "auto";
 
 const SYSTEM_CONTEXT = `
 You are Desk AI, the AI brain inside Amaan's Command Center.
@@ -117,6 +120,8 @@ function outputTextFromInteraction(payload) {
 }
 
 async function askGemini(prompt, generationConfig = {}) {
+  if (AI_PROVIDER === "omniroute") return askOmniRoute(prompt, generationConfig);
+
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     const error = new Error("GEMINI_API_KEY is missing in Vercel Environment Variables");
@@ -157,12 +162,52 @@ async function askGemini(prompt, generationConfig = {}) {
   return extractJson(text);
 }
 
+async function askOmniRoute(prompt, generationConfig = {}) {
+  const headers = { "Content-Type": "application/json" };
+  if (process.env.OMNIROUTE_API_KEY) {
+    headers.Authorization = `Bearer ${process.env.OMNIROUTE_API_KEY}`;
+  }
+
+  const response = await fetch(`${OMNIROUTE_BASE_URL}/chat/completions`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      model: OMNIROUTE_MODEL,
+      messages: [
+        {
+          role: "system",
+          content: "Return only valid JSON. You are Desk AI connected to Command Center dashboard actions."
+        },
+        { role: "user", content: prompt }
+      ],
+      temperature: generationConfig.temperature ?? 0.35,
+      max_tokens: generationConfig.max_output_tokens ?? generationConfig.maxOutputTokens ?? 700
+    })
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = payload.error?.message || payload.message || "OmniRoute request failed";
+    const error = new Error(message);
+    error.statusCode = response.status;
+    throw error;
+  }
+
+  const text = payload.choices?.[0]?.message?.content?.trim();
+  if (!text) throw new Error("OmniRoute returned an empty response");
+  return extractJson(text);
+}
+
 function compact(value, limit = 10000) {
   const text = JSON.stringify(value || {});
   return text.length > limit ? `${text.slice(0, limit)}...` : text;
 }
 
 module.exports = {
+  AI_PROVIDER,
+  GEMINI_MODEL,
+  OMNIROUTE_BASE_URL,
+  OMNIROUTE_MODEL,
   SYSTEM_CONTEXT,
   askGemini,
   compact,

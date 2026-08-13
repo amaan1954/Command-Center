@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "command-center": {
+      "command": "node",
+      "args": [
+        "D:\\Amaan AshifCommand Center\\mcp\\command-center-mcp.mjs"
+      ]
+    }
+  }
+}

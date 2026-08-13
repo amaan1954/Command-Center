@@ -4,9 +4,14 @@
   "description": "A desktop command center for brand, campaign, and content work.",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "mcp": "node mcp/command-center-mcp.mjs"
   },
   "devDependencies": {
     "electron": "^37.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.4.3"
   }
 }

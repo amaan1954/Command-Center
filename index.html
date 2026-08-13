@@ -2624,6 +2624,10 @@
           status.textContent = result.ready ? "Gemini online | Vercel" : "Gemini key missing";
           return;
         }
+        if (result.provider === "omniroute") {
+          status.textContent = result.ready ? "OmniRoute online | Vercel" : "OmniRoute missing";
+          return;
+        }
         const memoryLabel = result.memory === "supermemory" ? "Supermemory" : "Local memory";
         status.textContent = result.ollama ? `Ollama online | ${memoryLabel}` : `Ollama offline | ${memoryLabel}`;
       } catch {
@@ -2743,7 +2747,7 @@
         chat.messages.push({ role: "assistant", content: `${offline} ${error.message || "Check the bridge status above."}` });
       } finally {
         deskAiThinkingChatId = "";
-        document.getElementById("deskAiStatus").textContent = window.location.protocol === "file:" ? "Local AI brain" : "Gemini online | Vercel";
+        checkDeskAiStatus();
       }
 
       renderAiDesk();
