@@ -667,8 +667,50 @@
       border-radius: 13px;
       font-size: 0.75rem;
       line-height: 1.42;
-      white-space: pre-wrap;
       overflow-wrap: anywhere;
+    }
+
+    .ai-message-content {
+      display: grid;
+      gap: 7px;
+      white-space: normal;
+    }
+
+    .ai-message-content p,
+    .ai-message-content h1,
+    .ai-message-content h2,
+    .ai-message-content h3,
+    .ai-message-content ul,
+    .ai-message-content ol {
+      margin: 0;
+    }
+
+    .ai-message-content h1,
+    .ai-message-content h2,
+    .ai-message-content h3 {
+      color: #f3f7fb;
+      font-weight: 800;
+      line-height: 1.18;
+    }
+
+    .ai-message-content h1 { font-size: 1rem; }
+    .ai-message-content h2 { font-size: 0.9rem; }
+    .ai-message-content h3 { font-size: 0.82rem; }
+
+    .ai-message-content ul,
+    .ai-message-content ol {
+      padding-left: 18px;
+      display: grid;
+      gap: 3px;
+    }
+
+    .ai-message-content strong {
+      color: #f7fbff;
+      font-weight: 800;
+    }
+
+    .ai-message-content em {
+      color: #cbd5df;
     }
 
     .ai-message.user {
@@ -716,17 +758,54 @@
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 7px;
+      align-items: end;
+    }
+
+    .ai-command-editor {
+      min-width: 0;
+      display: grid;
+      gap: 5px;
+    }
+
+    .ai-format-toolbar {
+      display: inline-flex;
+      width: fit-content;
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid rgba(166, 176, 190, 0.2);
+      border-radius: 999px;
+      background: rgba(29, 35, 44, 0.94);
+    }
+
+    .ai-format-toolbar button {
+      min-width: 27px;
+      min-height: 25px;
+      padding: 3px 7px;
+      font-size: 0.66rem;
+    }
+
+    .ai-format-toolbar .italic-button {
+      font-style: italic;
     }
 
     .ai-command-input {
       min-width: 0;
+      min-height: 38px;
+      max-height: 120px;
+      overflow-y: auto;
       border: 1px solid rgba(166, 176, 190, 0.24);
-      border-radius: 999px;
+      border-radius: 14px;
       background: rgba(35, 42, 52, 0.96);
       color: var(--text);
       padding: 9px 13px;
       font: inherit;
       font-size: 0.75rem;
+    }
+
+    .ai-command-input:empty::before {
+      content: attr(data-placeholder);
+      color: var(--muted);
+      pointer-events: none;
     }
 
     .ai-command-input:focus {
@@ -1336,7 +1415,15 @@
           </div>
           <div class="ai-chat-log" id="aiChatLog"></div>
           <div class="ai-command-row">
-            <input class="ai-command-input" id="aiCommandInput" placeholder="Message Desk AI...">
+            <div class="ai-command-editor">
+              <div class="ai-format-toolbar">
+                <button id="boldAiInput" title="Bold"><strong>B</strong></button>
+                <button class="italic-button" id="italicAiInput" title="Italic">I</button>
+                <button id="bulletAiInput" title="Bullet list">List</button>
+                <button id="numberAiInput" title="Numbered list">1.</button>
+              </div>
+              <div class="ai-command-input" id="aiCommandInput" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Message Desk AI..."></div>
+            </div>
             <button class="primary" id="sendAiCommand">Send</button>
           </div>
         </div>
@@ -2172,7 +2259,7 @@
         const label = document.createElement("span");
         label.className = "ai-message-label";
         label.textContent = message.role === "assistant" ? "Desk AI" : "You";
-        bubble.append(label, document.createTextNode(message.content));
+        bubble.append(label, renderChatContent(message));
         log.appendChild(bubble);
       });
       if (isThinking) {
@@ -2271,6 +2358,100 @@
       const element = document.createElement("div");
       element.textContent = text || "";
       return element.innerHTML.replace(/\n/g, "<br>");
+    }
+
+    function sanitizeRichHtml(html) {
+      const template = document.createElement("template");
+      template.innerHTML = html || "";
+      const allowed = new Set(["B", "STRONG", "I", "EM", "UL", "OL", "LI", "BR", "DIV", "P"]);
+
+      const cleanNode = (node) => {
+        if (node.nodeType === Node.TEXT_NODE) return document.createTextNode(node.textContent || "");
+        if (node.nodeType !== Node.ELEMENT_NODE) return document.createTextNode("");
+        const element = document.createElement(allowed.has(node.tagName) ? node.tagName.toLowerCase() : "span");
+        node.childNodes.forEach((child) => element.appendChild(cleanNode(child)));
+        return element;
+      };
+
+      const container = document.createElement("div");
+      template.content.childNodes.forEach((node) => container.appendChild(cleanNode(node)));
+      return container.innerHTML;
+    }
+
+    function inlineMarkdown(text) {
+      const escaped = escapeAgentHtml(text).replace(/<br>/g, "\n");
+      return escaped
+        .replace(/`([^`]+)`/g, "<code>$1</code>")
+        .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+        .replace(/\*([^*]+)\*/g, "<em>$1</em>");
+    }
+
+    function markdownToHtml(markdown) {
+      const lines = String(markdown || "").split(/\r?\n/);
+      const html = [];
+      let listType = "";
+      const closeList = () => {
+        if (!listType) return;
+        html.push(`</${listType}>`);
+        listType = "";
+      };
+
+      lines.forEach((rawLine) => {
+        const line = rawLine.trim();
+        if (!line) {
+          closeList();
+          return;
+        }
+
+        const heading = line.match(/^(#{1,3})\s+(.+)$/);
+        if (heading) {
+          closeList();
+          const level = heading[1].length;
+          html.push(`<h${level}>${inlineMarkdown(heading[2])}</h${level}>`);
+          return;
+        }
+
+        const bullet = line.match(/^[-*]\s+(.+)$/);
+        if (bullet) {
+          if (listType !== "ul") {
+            closeList();
+            listType = "ul";
+            html.push("<ul>");
+          }
+          html.push(`<li>${inlineMarkdown(bullet[1])}</li>`);
+          return;
+        }
+
+        const numbered = line.match(/^\d+[.)]\s+(.+)$/);
+        if (numbered) {
+          if (listType !== "ol") {
+            closeList();
+            listType = "ol";
+            html.push("<ol>");
+          }
+          html.push(`<li>${inlineMarkdown(numbered[1])}</li>`);
+          return;
+        }
+
+        closeList();
+        html.push(`<p>${inlineMarkdown(line)}</p>`);
+      });
+
+      closeList();
+      return html.join("");
+    }
+
+    function renderChatContent(message) {
+      const content = document.createElement("div");
+      content.className = "ai-message-content";
+      if (message.role === "user" && message.html) {
+        content.innerHTML = sanitizeRichHtml(message.html);
+      } else if (message.role === "assistant") {
+        content.innerHTML = markdownToHtml(message.content);
+      } else {
+        content.textContent = message.content || "";
+      }
+      return content;
     }
 
     function applyDeskAiAction(action) {
@@ -2496,15 +2677,16 @@
     async function sendDeskAiCommand() {
       if (deskAiThinkingChatId) return;
       const input = document.getElementById("aiCommandInput");
-      const text = input.value.trim();
+      const text = input.innerText.trim();
+      const userHtml = sanitizeRichHtml(input.innerHTML);
       if (!text) return;
 
       const chat = getActiveAiChat();
-      chat.messages.push({ role: "user", content: text });
+      chat.messages.push({ role: "user", content: text, html: userHtml });
       if (/^Desk AI(?: \d+)?$|^New chat$/i.test(chat.title)) {
         chat.title = text.length > 34 ? `${text.slice(0, 34).trim()}...` : text;
       }
-      input.value = "";
+      input.innerHTML = "";
       renderAiDesk();
       saveState();
 
@@ -2778,8 +2960,22 @@
 
     document.getElementById("sendAiCommand").addEventListener("click", sendDeskAiCommand);
     document.getElementById("aiCommandInput").addEventListener("keydown", (event) => {
-      if (event.key === "Enter") sendDeskAiCommand();
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendDeskAiCommand();
+      }
     });
+
+    function applyAiInputFormat(command) {
+      const input = document.getElementById("aiCommandInput");
+      input.focus();
+      document.execCommand(command, false, null);
+    }
+
+    document.getElementById("boldAiInput").addEventListener("click", () => applyAiInputFormat("bold"));
+    document.getElementById("italicAiInput").addEventListener("click", () => applyAiInputFormat("italic"));
+    document.getElementById("bulletAiInput").addEventListener("click", () => applyAiInputFormat("insertUnorderedList"));
+    document.getElementById("numberAiInput").addEventListener("click", () => applyAiInputFormat("insertOrderedList"));
 
     document.getElementById("makeNotesTodo").addEventListener("click", makeTasksFromNotes);
 
