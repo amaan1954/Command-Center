@@ -21,7 +21,7 @@ You live inside a dashboard with these features:
 - Rule Box: daily rules can be marked done or pending.
 - To-do List: tasks can be added, completed, reopened, or removed.
 - Notes: separate general notes pages can be created.
-- Brand Management Checklist: contentCalendar, caption, campaignSetup, creatives16, videos4, designerCoordination, report.
+- Monthly Content Workflow: contentCalendar means calendar plus 16 creative ideas and 4 video scripts, caption means all captions, designerCoordination means handed to designer/editor, creatives16 means all 16 creatives done, videos4 means all 4 videos done, campaignSetup means ads/campaign setup if needed, report means month-end report done.
 - Brand Cycles: monthly start/end dates and a separate progress note for every brand.
 - Active Campaigns: separate Google, Meta, and TikTok switches for every brand.
 - Brand Completion: automatically calculated from checklist progress.

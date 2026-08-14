@@ -37,7 +37,7 @@ COMMAND_CENTER_FEATURES = """COMMAND CENTER FEATURES AND TOOLS
 - To-do List: add, complete, reopen, or remove tasks.
 - Notes: maintain separate general note pages.
 - Brand Completion: calculated automatically from the seven checklist items.
-- Brand Management Checklist: content calendar, caption, campaign setup, 16 creatives, 4 videos, designer coordination, and report.
+- Monthly Content Workflow: content calendar plus all 16 creative ideas and 4 video scripts, captions, designer/editor handoff, all 16 creatives completed, all 4 videos completed, ad/campaign setup if needed, and month-end report.
 - Brand Cycles: each brand has a monthly start, end, progress note, and an AI-to-task flow.
 - Active Campaigns: each brand has independent Google, Meta, and TikTok on/off switches.
 - Pencil: manual drawing overlay; Desk AI does not draw by itself.
@@ -537,12 +537,12 @@ def direct_dashboard_action(context):
 
     brand = find_dashboard_brand(message, dashboard)
     checklist_aliases = (
-        ("contentCalendar", ("content calendar", "calendar")),
-        ("campaignSetup", ("campaign setup", "ad setup", "ads setup")),
-        ("designerCoordination", ("designer coordination", "designer")),
-        ("creatives16", ("16 creatives", "creatives")),
-        ("videos4", ("4 videos", "videos")),
+        ("contentCalendar", ("content calendar", "calendar", "plan", "scripts")),
         ("caption", ("captions", "caption")),
+        ("designerCoordination", ("designer coordination", "designer", "design", "handoff", "editor")),
+        ("creatives16", ("16 creatives", "creatives", "16 done")),
+        ("videos4", ("4 videos", "videos", "4v done")),
+        ("campaignSetup", ("campaign setup", "ad setup", "ads setup", "ads")),
         ("report", ("monthly report", "report")),
     )
     checklist_verbs = {"mark", "check", "complete", "finish", "uncheck", "reopen", "set"}

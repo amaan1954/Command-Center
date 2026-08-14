@@ -25,7 +25,7 @@ Client config example:
 
 ## Tools
 
-- `get_dashboard_context`: reads todos, cycles, campaigns, checklist, rules, and notes metadata.
+- `get_dashboard_context`: reads todos, cycles, campaigns, monthly content workflow checklist, rules, and notes metadata.
 - `get_dashboard_summary`: reads a compact planning summary.
 - `apply_dashboard_action`: applies one action from the shared Command Center action contract.
 - `add_todo`: adds a task.
@@ -41,6 +41,12 @@ Desk AI and the MCP server use the same action names:
 { "type": "add_todo", "text": "KL Mobile Events: Get 1 video from editor" }
 { "type": "set_campaign_platform", "brand": "HERAVIS", "platform": "google", "active": true }
 { "type": "set_brand_note", "brand": "Recova", "text": "Report due 10th", "mode": "append" }
+```
+
+Checklist order:
+
+```text
+contentCalendar -> caption -> designerCoordination -> creatives16 -> videos4 -> campaignSetup -> report
 ```
 
 ## Current Storage

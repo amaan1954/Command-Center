@@ -9,10 +9,10 @@ export const DATA_PATH = path.join(PROJECT_ROOT, "data", "command-center-data.js
 const checklistKeys = [
   "contentCalendar",
   "caption",
-  "campaignSetup",
+  "designerCoordination",
   "creatives16",
   "videos4",
-  "designerCoordination",
+  "campaignSetup",
   "report"
 ];
 

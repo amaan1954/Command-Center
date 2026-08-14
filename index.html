@@ -1100,7 +1100,7 @@
 
     .checklist-head {
       display: grid;
-      grid-template-columns: 1.18fr repeat(7, 42px) 32px;
+      grid-template-columns: 1.18fr repeat(7, minmax(54px, 0.22fr)) 38px;
       gap: 4px;
       padding: 0 2px;
       color: var(--muted);
@@ -1111,7 +1111,7 @@
 
     .brand-row {
       display: grid;
-      grid-template-columns: 1.18fr repeat(7, 42px) 32px;
+      grid-template-columns: 1.18fr repeat(7, minmax(54px, 0.22fr)) 38px;
       gap: 4px;
       align-items: center;
       min-height: 0;
@@ -1159,6 +1159,12 @@
       margin: 0 auto;
       accent-color: var(--accent);
       transition: transform 160ms ease;
+    }
+
+    .check-cell {
+      display: grid;
+      place-items: center;
+      min-width: 0;
     }
 
     .brand-row input[type="checkbox"]:checked,
@@ -1239,6 +1245,208 @@
     .small-note {
       color: var(--muted);
       font-size: 0.7rem;
+    }
+
+    /* Orange paper theme */
+    :root {
+      --bg: #f7f2ea;
+      --panel: #fffaf2;
+      --panel-soft: #fff3df;
+      --line: #e8d4bb;
+      --line-strong: #f28c28;
+      --text: #24170e;
+      --muted: #8a6b4d;
+      --accent: #f28c28;
+      --accent-deep: #b85f13;
+      --shadow: 0 10px 24px rgba(86, 52, 20, 0.08);
+    }
+
+    html,
+    body {
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    .panel,
+    .mini-panel,
+    .todo-panel,
+    .ai-desk,
+    .ai-desk-shell,
+    .ai-chat-sidebar {
+      background: var(--panel);
+      border-color: var(--line);
+      box-shadow: var(--shadow);
+      backdrop-filter: none;
+    }
+
+    .panel:hover,
+    .mini-panel:hover,
+    .todo-panel:hover,
+    .ai-desk:hover {
+      border-color: #e7a55f;
+      box-shadow: 0 12px 28px rgba(86, 52, 20, 0.1);
+    }
+
+    .todo-panel .panel-title,
+    .panel-title,
+    .time,
+    .brand-name,
+    .ai-message-content strong {
+      color: var(--text);
+    }
+
+    .panel-meta,
+    .tiny,
+    .sub,
+    .progress-pill,
+    .ai-message-label,
+    .ai-chat-preview {
+      color: var(--muted);
+    }
+
+    button,
+    .ai-desk .primary {
+      background: #fff7ed;
+      color: var(--text);
+      border-color: var(--line);
+      box-shadow: none;
+    }
+
+    button.primary,
+    .ai-desk button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+      box-shadow: none;
+    }
+
+    .rule-item,
+    .cycle-item,
+    .campaign-item,
+    .active-item,
+    .todo-item,
+    .legend-item,
+    .brand-row,
+    .notes-area,
+    .task-input,
+    .field,
+    .select,
+    .ai-command-input,
+    .ai-role-row .field,
+    .cycle-notes,
+    .ai-format-toolbar {
+      background: #ffffff;
+      border-color: var(--line);
+      color: var(--text);
+      box-shadow: none;
+    }
+
+    .brand-row::before {
+      background: #ffe3bd;
+      box-shadow: none;
+    }
+
+    .brand-row input[type="checkbox"],
+    .todo-item input[type="checkbox"],
+    .rule-item input[type="checkbox"] {
+      accent-color: var(--accent);
+    }
+
+    .pie {
+      background: conic-gradient(var(--accent) 0deg, var(--accent) 0deg, #f5d5aa 0deg, #f5d5aa 360deg);
+      border-color: var(--line);
+      box-shadow: none;
+    }
+
+    .pie::after {
+      background: var(--panel);
+      border-color: var(--line);
+    }
+
+    .legend-item {
+      background: #fffaf2;
+    }
+
+    .campaign-item {
+      border-left-color: #c9b39b;
+    }
+
+    .campaign-item.campaign-active {
+      border-left-color: #f28c28;
+      background: #fff1dd;
+      box-shadow: 0 0 0 1px rgba(242, 140, 40, 0.08);
+    }
+
+    .campaign-item.campaign-active .drag-handle {
+      color: #c66a11;
+      text-shadow: none;
+    }
+
+    .cycle-item.report-day {
+      border-color: #f28c28;
+      background: #fff1dd;
+      box-shadow: 0 0 0 2px rgba(242, 140, 40, 0.12);
+    }
+
+    .report-badge,
+    .ai-result strong {
+      color: #b85f13;
+    }
+
+    .ai-result {
+      background: #fff1dd;
+      border-color: #f1c18c;
+    }
+
+    .ai-message.user {
+      background: #fff1dd;
+      border-color: #f1c18c;
+    }
+
+    .ai-message.assistant {
+      background: #ffffff;
+      border-color: var(--line);
+    }
+
+    .ai-message-content h1,
+    .ai-message-content h2,
+    .ai-message-content h3 {
+      color: var(--text);
+    }
+
+    .ai-message-content em {
+      color: #6e4f32;
+    }
+
+    .todo-panel .todo-item {
+      background: #fffdf8;
+      border-color: var(--line);
+    }
+
+    .todo-panel .todo-item:hover {
+      background: #fff7ed;
+      border-color: #e7a55f;
+    }
+
+    .todo-panel .todo-text {
+      color: var(--text);
+    }
+
+    .todo-panel .todo-item input[type="checkbox"] {
+      accent-color: var(--accent);
+    }
+
+    .todo-panel .todo-item button {
+      background: #fff7ed;
+      border-color: var(--line);
+      color: var(--text);
+    }
+
+    .draw-controls {
+      background: #fffaf2;
+      border-color: var(--line);
+      box-shadow: var(--shadow);
+      backdrop-filter: none;
     }
 
     @media (max-width: 1080px) {
@@ -1432,19 +1640,19 @@
 
     <section class="bottom-center panel">
       <div class="panel-head">
-        <h2 class="panel-title">Brand Management Checklist</h2>
-        <span class="panel-meta">Calendar, caption, setup, design, report</span>
+        <h2 class="panel-title">Monthly Content Workflow</h2>
+        <span class="panel-meta">Plan scripts, captions, design, completion, ads, report</span>
       </div>
       <div class="tracker-layout">
         <div class="checklist-head">
           <span>Brand</span>
-          <span>Cal</span>
-          <span>Cap</span>
-          <span>Ads</span>
-          <span>16C</span>
-          <span>4V</span>
-          <span>Des</span>
-          <span>Rep</span>
+          <span title="Content calendar plus all 16 creative ideas and 4 video scripts">Plan</span>
+          <span title="Captions written for all planned posts">Caption</span>
+          <span title="Everything handed to designer/editor">Design</span>
+          <span title="All 16 creatives completed">16 Done</span>
+          <span title="All 4 videos completed">4V Done</span>
+          <span title="Campaign setup or ad work completed if needed">Ads</span>
+          <span title="Month-end report completed">Report</span>
           <span>%</span>
         </div>
         <div class="brand-checklist" id="brandChecklist"></div>
@@ -2116,7 +2324,15 @@
     function renderBrandChecklist() {
       const host = document.getElementById("brandChecklist");
       host.innerHTML = "";
-      const keys = ["contentCalendar", "caption", "campaignSetup", "creatives16", "videos4", "designerCoordination", "report"];
+      const steps = [
+        ["contentCalendar", "Plan: content calendar, 16 creative ideas, and 4 video scripts are ready"],
+        ["caption", "Captions are written for all planned posts"],
+        ["designerCoordination", "Everything is handed to designer/editor"],
+        ["creatives16", "All 16 creatives are completed"],
+        ["videos4", "All 4 videos are completed"],
+        ["campaignSetup", "Campaign/ad setup is completed if this brand needs ads"],
+        ["report", "Month-end report is completed"]
+      ];
 
       state.brandChecklist.forEach((brand, index) => {
         const row = document.createElement("div");
@@ -2128,9 +2344,14 @@
         row.appendChild(name);
 
         let done = 0;
-        keys.forEach((key) => {
+        steps.forEach(([key, label]) => {
+          const cell = document.createElement("label");
+          cell.className = "check-cell";
+          cell.title = label;
+
           const box = document.createElement("input");
           box.type = "checkbox";
+          box.setAttribute("aria-label", `${brand.name}: ${label}`);
           box.checked = Boolean(brand[key]);
           if (brand[key]) done += 1;
           box.addEventListener("change", () => {
@@ -2138,12 +2359,13 @@
             updateSummary(true);
             saveState();
           });
-          row.appendChild(box);
+          cell.appendChild(box);
+          row.appendChild(cell);
         });
 
         const percent = document.createElement("div");
         percent.className = "progress-pill";
-        const completion = Math.round((done / keys.length) * 100);
+        const completion = Math.round((done / steps.length) * 100);
         percent.textContent = `${completion}%`;
         row.style.setProperty("--progress", `${completion}%`);
         row.appendChild(percent);
@@ -2780,7 +3002,7 @@
     }
 
     function updateSummary(animate) {
-      const keys = ["contentCalendar", "caption", "campaignSetup", "creatives16", "videos4", "designerCoordination", "report"];
+      const keys = ["contentCalendar", "caption", "designerCoordination", "creatives16", "videos4", "campaignSetup", "report"];
       const total = state.brandChecklist.length * keys.length;
       const done = state.brandChecklist.reduce((sum, brand) => {
         return sum + keys.reduce((inner, key) => inner + (brand[key] ? 1 : 0), 0);
