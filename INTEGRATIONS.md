@@ -29,8 +29,13 @@ Client config example:
 - `get_dashboard_summary`: reads a compact planning summary.
 - `apply_dashboard_action`: applies one action from the shared Command Center action contract.
 - `add_todo`: adds a task.
+- `set_todo_status`: completes or reopens a task.
+- `delete_todo`: removes a task.
 - `set_campaign_platform`: toggles Google, Meta, or TikTok for a brand.
 - `set_brand_note`: appends or replaces a brand-cycle note.
+- `set_checklist_item`: marks content workflow steps done or pending.
+- `set_cycle`: updates monthly cycle dates.
+- `create_note_page`: creates a notes page.
 - `replace_dashboard_state`: replaces the local dashboard JSON after preserving user data.
 - `list_allowed_folders`: shows folders the MCP server can access.
 - `list_folder`: lists files/folders inside an approved folder.
@@ -49,7 +54,7 @@ By default, the MCP server can access only the Command Center project folder. Ad
       "command": "node",
       "args": ["D:\\Amaan AshifCommand Center\\mcp\\command-center-mcp.mjs"],
       "env": {
-        "COMMAND_CENTER_ALLOWED_FOLDERS": "brands=D:\\PLATFORM DADDY BRANDS;assets=D:\\Brand Assets"
+        "COMMAND_CENTER_ALLOWED_FOLDERS": "brands=D:\\Tempest;assets=D:\\Brand Assets"
       }
     }
   }

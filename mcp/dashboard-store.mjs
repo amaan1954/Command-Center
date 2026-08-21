@@ -6,6 +6,7 @@ import { isCloudStoreReady, readCloudDashboard, writeCloudDashboard } from "./su
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const PROJECT_ROOT = path.resolve(__dirname, "..");
 export const DATA_PATH = path.join(PROJECT_ROOT, "data", "command-center-data.json");
+const API_URL = (process.env.COMMAND_CENTER_API_URL || "").trim();
 
 const checklistKeys = [
   "contentCalendar",
@@ -77,6 +78,15 @@ export function defaultDashboard() {
 }
 
 export async function readDashboard() {
+  if (API_URL) {
+    try {
+      const apiDashboard = await readApiDashboard();
+      if (apiDashboard) return normalizeDashboard(apiDashboard);
+    } catch {
+      // Keep Iris useful even if the live dashboard API is temporarily unavailable.
+    }
+  }
+
   if (isCloudStoreReady()) {
     try {
       const cloudDashboard = await readCloudDashboard();
@@ -103,6 +113,15 @@ export async function writeDashboard(dashboard) {
   await fs.mkdir(path.dirname(DATA_PATH), { recursive: true });
   await fs.writeFile(DATA_PATH, JSON.stringify(normalized, null, 2), "utf8");
 
+  if (API_URL) {
+    try {
+      await writeApiDashboard(normalized);
+      return;
+    } catch {
+      // Fall through to direct Supabase or local JSON fallback.
+    }
+  }
+
   if (isCloudStoreReady()) {
     try {
       await writeCloudDashboard(normalized);
@@ -110,6 +129,29 @@ export async function writeDashboard(dashboard) {
       // Local JSON remains the fallback source if Supabase is unreachable.
     }
   }
+}
+
+async function readApiDashboard() {
+  const response = await fetch(API_URL, { headers: { Accept: "application/json" } });
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Command Center API read failed: ${response.status} ${detail}`);
+  }
+  const payload = await response.json();
+  return payload?.dashboard || null;
+}
+
+async function writeApiDashboard(dashboard) {
+  const response = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ dashboard })
+  });
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Command Center API write failed: ${response.status} ${detail}`);
+  }
+  return response.json();
 }
 
 export function normalizeDashboard(input) {

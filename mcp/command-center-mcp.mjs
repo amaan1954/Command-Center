@@ -120,6 +120,35 @@ server.registerTool(
 );
 
 server.registerTool(
+  "set_todo_status",
+  {
+    title: "Set To-do Status",
+    description: "Mark a Command Center task complete or reopen it.",
+    inputSchema: {
+      text: z.string().min(1),
+      done: z.boolean()
+    }
+  },
+  async ({ text: taskText, done }) => {
+    const { result, dashboard } = await applyAndSave({ type: "set_todo_status", text: taskText, done });
+    return text({ result, summary: summarizeDashboard(dashboard) });
+  }
+);
+
+server.registerTool(
+  "delete_todo",
+  {
+    title: "Delete To-do",
+    description: "Remove a Command Center task from the To-do List.",
+    inputSchema: { text: z.string().min(1) }
+  },
+  async ({ text: taskText }) => {
+    const { result, dashboard } = await applyAndSave({ type: "delete_todo", text: taskText });
+    return text({ result, summary: summarizeDashboard(dashboard) });
+  }
+);
+
+server.registerTool(
   "set_campaign_platform",
   {
     title: "Set Campaign Platform",
@@ -137,6 +166,31 @@ server.registerTool(
 );
 
 server.registerTool(
+  "set_checklist_item",
+  {
+    title: "Set Checklist Item",
+    description: "Mark a brand workflow step done or pending: plan, caption, design, 16 creatives, 4 videos, ads, or report.",
+    inputSchema: {
+      brand: z.string().min(1),
+      item: z.enum([
+        "contentCalendar",
+        "caption",
+        "designerCoordination",
+        "creatives16",
+        "videos4",
+        "campaignSetup",
+        "report"
+      ]),
+      done: z.boolean()
+    }
+  },
+  async ({ brand, item, done }) => {
+    const { result, dashboard } = await applyAndSave({ type: "set_checklist_item", brand, item, done });
+    return text({ result, summary: summarizeDashboard(dashboard) });
+  }
+);
+
+server.registerTool(
   "set_brand_note",
   {
     title: "Set Brand Note",
@@ -149,6 +203,39 @@ server.registerTool(
   },
   async ({ brand, note, mode }) => {
     const { result, dashboard } = await applyAndSave({ type: "set_brand_note", brand, text: note, mode });
+    return text({ result, summary: summarizeDashboard(dashboard) });
+  }
+);
+
+server.registerTool(
+  "set_cycle",
+  {
+    title: "Set Brand Cycle",
+    description: "Update a brand's monthly cycle start and/or end day.",
+    inputSchema: {
+      brand: z.string().min(1),
+      start: z.string().optional(),
+      end: z.string().optional()
+    }
+  },
+  async ({ brand, start, end }) => {
+    const { result, dashboard } = await applyAndSave({ type: "set_cycle", brand, start, end });
+    return text({ result, summary: summarizeDashboard(dashboard) });
+  }
+);
+
+server.registerTool(
+  "create_note_page",
+  {
+    title: "Create Note Page",
+    description: "Create a new Command Center notes page.",
+    inputSchema: {
+      title: z.string().min(1),
+      content: z.string().default("")
+    }
+  },
+  async ({ title, content }) => {
+    const { result, dashboard } = await applyAndSave({ type: "create_note_page", title, content });
     return text({ result, summary: summarizeDashboard(dashboard) });
   }
 );

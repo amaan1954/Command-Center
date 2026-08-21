@@ -6,7 +6,7 @@
         "D:\\Amaan AshifCommand Center\\mcp\\command-center-mcp.mjs"
       ],
       "env": {
-        "COMMAND_CENTER_ALLOWED_FOLDERS": "brands=D:\\PLATFORM DADDY BRANDS;assets=D:\\Brand Assets"
+        "COMMAND_CENTER_ALLOWED_FOLDERS": "brands=D:\\Tempest;assets=D:\\Brand Assets"
       }
     }
   }
