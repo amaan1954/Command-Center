@@ -82,13 +82,24 @@ contentCalendar -> caption -> designerCoordination -> creatives16 -> videos4 -> 
 
 ## Current Storage
 
-The local MCP server reads and writes:
+Command Center can now use Supabase as the shared dashboard storage.
+
+When these environment variables are available, both Vercel and the MCP server read/write the same `command_center_state` row:
+
+```text
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=sb_publishable_...
+```
+
+Create the table by running `supabase-schema.sql` in Supabase SQL Editor.
+
+If Supabase is not configured or temporarily unreachable, the local MCP server falls back to:
 
 ```text
 D:\Amaan AshifCommand Center\data\command-center-data.json
 ```
 
-The Vercel website still stores dashboard state in the browser. For true cross-device memory, the next integration should add a database-backed state API.
+The browser still saves to `localStorage` first for instant UI response, then syncs to `/api/dashboard`.
 
 ## Optional OmniRoute Provider
 

@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isCloudStoreReady, readCloudDashboard, writeCloudDashboard } from "./supabase-store.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const PROJECT_ROOT = path.resolve(__dirname, "..");
@@ -76,6 +77,15 @@ export function defaultDashboard() {
 }
 
 export async function readDashboard() {
+  if (isCloudStoreReady()) {
+    try {
+      const cloudDashboard = await readCloudDashboard();
+      if (cloudDashboard) return normalizeDashboard(cloudDashboard);
+    } catch {
+      // Keep Iris useful even if cloud sync is temporarily unavailable.
+    }
+  }
+
   try {
     const raw = await fs.readFile(DATA_PATH, "utf8");
     const parsed = JSON.parse(raw);
@@ -89,8 +99,17 @@ export async function readDashboard() {
 }
 
 export async function writeDashboard(dashboard) {
+  const normalized = normalizeDashboard(dashboard);
   await fs.mkdir(path.dirname(DATA_PATH), { recursive: true });
-  await fs.writeFile(DATA_PATH, JSON.stringify(normalizeDashboard(dashboard), null, 2), "utf8");
+  await fs.writeFile(DATA_PATH, JSON.stringify(normalized, null, 2), "utf8");
+
+  if (isCloudStoreReady()) {
+    try {
+      await writeCloudDashboard(normalized);
+    } catch {
+      // Local JSON remains the fallback source if Supabase is unreachable.
+    }
+  }
 }
 
 export function normalizeDashboard(input) {

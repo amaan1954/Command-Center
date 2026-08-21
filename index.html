@@ -1677,6 +1677,7 @@
   <script>
     const STORAGE_KEY = "command-center-fixed-v3";
     const AI_BASE_URL = window.location.protocol === "file:" ? "http://127.0.0.1:8766" : "";
+    const CLOUD_SYNC_ENABLED = window.location.protocol !== "file:";
 
     const brandDefaults = [
       "KL Mobile Events",
@@ -1859,6 +1860,8 @@
     };
 
     const state = loadState();
+    let cloudSaveTimer = null;
+    let isApplyingCloudState = false;
     ensureBrandCycles();
     ensureActiveCampaigns();
     let timerInterval = null;
@@ -1936,7 +1939,55 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       // The desktop version writes the same data to its local data file.
       window.commandCenterFile?.save(state).catch(() => {});
+      queueCloudSave();
       updateSummary(false);
+    }
+
+    async function syncCloudState() {
+      if (!CLOUD_SYNC_ENABLED) return;
+
+      try {
+        const response = await fetch("/api/dashboard");
+        if (!response.ok) return;
+        const payload = await response.json();
+
+        if (payload.dashboard) {
+          isApplyingCloudState = true;
+          Object.assign(state, loadSavedState(payload.dashboard));
+          ensureBrandCycles();
+          ensureActiveCampaigns();
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          renderAll();
+          restoreDoodle();
+          restoreDrawToolbar();
+          isApplyingCloudState = false;
+          return;
+        }
+
+        await pushCloudState();
+      } catch {
+        isApplyingCloudState = false;
+      }
+    }
+
+    function queueCloudSave() {
+      if (!CLOUD_SYNC_ENABLED || isApplyingCloudState) return;
+      window.clearTimeout(cloudSaveTimer);
+      cloudSaveTimer = window.setTimeout(pushCloudState, 500);
+    }
+
+    async function pushCloudState() {
+      if (!CLOUD_SYNC_ENABLED) return;
+
+      try {
+        await fetch("/api/dashboard", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dashboard: state })
+        });
+      } catch {
+        // Browser localStorage keeps work safe if cloud sync is unavailable.
+      }
     }
 
     async function loadDesktopFile() {
@@ -3384,6 +3435,7 @@
     restoreDrawToolbar();
     checkDeskAiStatus();
     window.setInterval(checkDeskAiStatus, 30000);
+    syncCloudState();
     loadDesktopFile();
     window.setTimeout(syncExistingChatMemory, 1200);
   </script>
