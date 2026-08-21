@@ -7,6 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const PROJECT_ROOT = path.resolve(__dirname, "..");
 export const DATA_PATH = path.join(PROJECT_ROOT, "data", "command-center-data.json");
 const API_URL = (process.env.COMMAND_CENTER_API_URL || "").trim();
+let lastStorageSource = "local-json";
 
 const checklistKeys = [
   "contentCalendar",
@@ -81,7 +82,10 @@ export async function readDashboard() {
   if (API_URL) {
     try {
       const apiDashboard = await readApiDashboard();
-      if (apiDashboard) return normalizeDashboard(apiDashboard);
+      if (apiDashboard) {
+        lastStorageSource = "command-center-api";
+        return normalizeDashboard(apiDashboard);
+      }
     } catch {
       // Keep Iris useful even if the live dashboard API is temporarily unavailable.
     }
@@ -90,7 +94,10 @@ export async function readDashboard() {
   if (isCloudStoreReady()) {
     try {
       const cloudDashboard = await readCloudDashboard();
-      if (cloudDashboard) return normalizeDashboard(cloudDashboard);
+      if (cloudDashboard) {
+        lastStorageSource = "supabase";
+        return normalizeDashboard(cloudDashboard);
+      }
     } catch {
       // Keep Iris useful even if cloud sync is temporarily unavailable.
     }
@@ -99,11 +106,13 @@ export async function readDashboard() {
   try {
     const raw = await fs.readFile(DATA_PATH, "utf8");
     const parsed = JSON.parse(raw);
+    lastStorageSource = "local-json";
     return normalizeDashboard(parsed);
   } catch (error) {
     if (error.code !== "ENOENT") throw error;
     const dashboard = defaultDashboard();
     await writeDashboard(dashboard);
+    lastStorageSource = "local-json";
     return dashboard;
   }
 }
@@ -116,6 +125,7 @@ export async function writeDashboard(dashboard) {
   if (API_URL) {
     try {
       await writeApiDashboard(normalized);
+      lastStorageSource = "command-center-api";
       return;
     } catch {
       // Fall through to direct Supabase or local JSON fallback.
@@ -125,6 +135,7 @@ export async function writeDashboard(dashboard) {
   if (isCloudStoreReady()) {
     try {
       await writeCloudDashboard(normalized);
+      lastStorageSource = "supabase";
     } catch {
       // Local JSON remains the fallback source if Supabase is unreachable.
     }
@@ -195,6 +206,9 @@ export function summarizeDashboard(dashboard) {
     }));
 
   return {
+    storageSource: lastStorageSource,
+    apiUrl: API_URL || null,
+    cloudSync: isCloudStoreReady(),
     dataPath: DATA_PATH,
     todoCount: dashboard.todos.length,
     openTodoCount: dashboard.todos.filter((todo) => !todo.done).length,
