@@ -32,6 +32,37 @@ Client config example:
 - `set_campaign_platform`: toggles Google, Meta, or TikTok for a brand.
 - `set_brand_note`: appends or replaces a brand-cycle note.
 - `replace_dashboard_state`: replaces the local dashboard JSON after preserving user data.
+- `list_allowed_folders`: shows folders the MCP server can access.
+- `list_folder`: lists files/folders inside an approved folder.
+- `read_folder_file`: reads an approved text file.
+- `write_folder_file`: writes or appends an approved text file.
+- `search_folder_text`: searches approved folders.
+
+## Folder Access
+
+By default, the MCP server can access only the Command Center project folder. Add more folders with `COMMAND_CENTER_ALLOWED_FOLDERS`.
+
+```json
+{
+  "mcpServers": {
+    "command-center": {
+      "command": "node",
+      "args": ["D:\\Amaan AshifCommand Center\\mcp\\command-center-mcp.mjs"],
+      "env": {
+        "COMMAND_CENTER_ALLOWED_FOLDERS": "brands=D:\\PLATFORM DADDY BRANDS;assets=D:\\Brand Assets"
+      }
+    }
+  }
+}
+```
+
+Folder entries use this format:
+
+```text
+name=D:\Folder Path;another=D:\Another Folder
+```
+
+Blocked automatically: `.git`, `node_modules`, `__pycache__`, `.vercel`, `data/secrets.json`, and `data/desk-ai-memory.json`.
 
 ## Action Contract
 

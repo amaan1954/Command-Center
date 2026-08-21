@@ -10,6 +10,13 @@ import {
   summarizeDashboard,
   writeDashboard
 } from "./dashboard-store.mjs";
+import {
+  listAllowedFolders,
+  listFolder,
+  readFolderFile,
+  searchFolderText,
+  writeFolderFile
+} from "./folder-access.mjs";
 
 function text(payload) {
   return {
@@ -158,6 +165,73 @@ server.registerTool(
     const saved = await readDashboard();
     return text({ result: `Saved dashboard state to ${DATA_PATH}`, summary: summarizeDashboard(saved) });
   }
+);
+
+server.registerTool(
+  "list_allowed_folders",
+  {
+    title: "List Allowed Folders",
+    description: "Show the folders this Command Center MCP server is allowed to access.",
+    inputSchema: {}
+  },
+  async () => text(await listAllowedFolders())
+);
+
+server.registerTool(
+  "list_folder",
+  {
+    title: "List Folder",
+    description: "List files and folders inside an allowed folder.",
+    inputSchema: {
+      folder: z.string().default("command-center"),
+      path: z.string().default(".")
+    }
+  },
+  async ({ folder, path: relativePath }) => text(await listFolder(folder, relativePath))
+);
+
+server.registerTool(
+  "read_folder_file",
+  {
+    title: "Read Folder File",
+    description: "Read a UTF-8 text file inside an allowed folder. Secrets and system folders are blocked.",
+    inputSchema: {
+      folder: z.string().default("command-center"),
+      path: z.string().min(1),
+      maxBytes: z.number().int().positive().max(500000).default(80000)
+    }
+  },
+  async ({ folder, path: relativePath, maxBytes }) => text(await readFolderFile(folder, relativePath, maxBytes))
+);
+
+server.registerTool(
+  "write_folder_file",
+  {
+    title: "Write Folder File",
+    description: "Write or append a UTF-8 text file inside an allowed folder. Use carefully; this changes files.",
+    inputSchema: {
+      folder: z.string().default("command-center"),
+      path: z.string().min(1),
+      content: z.string(),
+      mode: z.enum(["overwrite", "append"]).default("overwrite")
+    }
+  },
+  async ({ folder, path: relativePath, content, mode }) => text(await writeFolderFile(folder, relativePath, content, mode))
+);
+
+server.registerTool(
+  "search_folder_text",
+  {
+    title: "Search Folder Text",
+    description: "Search text inside allowed folder files. Large files, secrets, node_modules, and .git are skipped.",
+    inputSchema: {
+      folder: z.string().default("command-center"),
+      query: z.string().min(1),
+      path: z.string().default("."),
+      limit: z.number().int().positive().max(200).default(50)
+    }
+  },
+  async ({ folder, query, path: relativePath, limit }) => text(await searchFolderText(folder, query, relativePath, limit))
 );
 
 const transport = new StdioServerTransport();
