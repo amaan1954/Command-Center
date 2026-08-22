@@ -10,6 +10,24 @@ Run locally:
 npm run mcp
 ```
 
+Run as a local URL endpoint:
+
+```powershell
+npm run mcp:http
+```
+
+Local MCP URL:
+
+```text
+http://127.0.0.1:8787/mcp
+```
+
+Health check:
+
+```text
+http://127.0.0.1:8787/health
+```
+
 Client config example:
 
 ```json
@@ -18,6 +36,18 @@ Client config example:
     "command-center": {
       "command": "node",
       "args": ["D:\\Amaan AshifCommand Center\\mcp\\command-center-mcp.mjs"]
+    }
+  }
+}
+```
+
+URL client config example:
+
+```json
+{
+  "mcpServers": {
+    "command_center": {
+      "url": "http://127.0.0.1:8787/mcp"
     }
   }
 }
