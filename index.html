@@ -1247,24 +1247,25 @@
       font-size: 0.7rem;
     }
 
-    /* Dark orange command theme */
+    /* Smooth black command theme with restrained orange accents */
     :root {
-      --bg: #17100b;
-      --panel: #22170f;
-      --panel-soft: #2c1d12;
-      --line: #4a3020;
-      --line-strong: #e8791a;
-      --text: #fff3e5;
-      --muted: #c29d78;
-      --accent: #f28c28;
-      --accent-deep: #7f3c0d;
-      --shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+      --bg: #05070a;
+      --panel: #0c1118;
+      --panel-soft: #121a24;
+      --line: rgba(255, 255, 255, 0.09);
+      --line-strong: rgba(255, 145, 38, 0.58);
+      --text: #f5f7fa;
+      --muted: #9aa6b5;
+      --accent: #ff8a1f;
+      --accent-soft: rgba(255, 138, 31, 0.14);
+      --accent-deep: #7a3a08;
+      --shadow: 0 18px 48px rgba(0, 0, 0, 0.42);
     }
 
     html,
     body {
       color: var(--text);
-      background: var(--bg);
+      background: #05070a;
     }
 
     .panel,
@@ -1273,7 +1274,7 @@
     .ai-desk,
     .ai-desk-shell,
     .ai-chat-sidebar {
-      background: var(--panel);
+      background: #0c1118;
       border-color: var(--line);
       box-shadow: var(--shadow);
       backdrop-filter: none;
@@ -1283,8 +1284,8 @@
     .mini-panel:hover,
     .todo-panel:hover,
     .ai-desk:hover {
-      border-color: #a95717;
-      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.34);
+      border-color: rgba(255, 145, 38, 0.34);
+      box-shadow: 0 20px 54px rgba(0, 0, 0, 0.48);
     }
 
     .todo-panel .panel-title,
@@ -1306,18 +1307,18 @@
 
     button,
     .ai-desk .primary {
-      background: #2f2116;
+      background: #121923;
       color: var(--text);
-      border-color: var(--line);
-      box-shadow: none;
+      border-color: rgba(255, 255, 255, 0.1);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
     }
 
     button.primary,
     .ai-desk button.primary {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #ffffff;
-      box-shadow: none;
+      background: #ff8a1f;
+      border-color: #ff9b3d;
+      color: #111111;
+      box-shadow: 0 10px 26px rgba(255, 138, 31, 0.18);
     }
 
     .rule-item,
@@ -1335,15 +1336,15 @@
     .ai-role-row .field,
     .cycle-notes,
     .ai-format-toolbar {
-      background: #2a1d14;
+      background: #121a24;
       border-color: var(--line);
       color: var(--text);
       box-shadow: none;
     }
 
     .brand-row::before {
-      background: #4a2b12;
-      box-shadow: none;
+      background: linear-gradient(90deg, rgba(255, 138, 31, 0.09), rgba(255, 176, 72, 0.16));
+      box-shadow: 6px 0 14px rgba(255, 138, 31, 0.04);
     }
 
     .brand-row input[type="checkbox"],
@@ -1353,39 +1354,39 @@
     }
 
     .pie {
-      background: conic-gradient(var(--accent) 0deg, var(--accent) 0deg, #4a2b12 0deg, #4a2b12 360deg);
+      background: conic-gradient(var(--accent) 0deg, var(--accent) 0deg, #222b37 0deg, #222b37 360deg);
       border-color: var(--line);
-      box-shadow: none;
+      box-shadow: inset 0 0 26px rgba(255, 138, 31, 0.04);
     }
 
     .pie::after {
-      background: var(--panel);
+      background: #0c1118;
       border-color: var(--line);
     }
 
     .legend-item {
-      background: #261a12;
+      background: #121a24;
     }
 
     .campaign-item {
-      border-left-color: #5d402c;
+      border-left-color: #313945;
     }
 
     .campaign-item.campaign-active {
-      border-left-color: #f28c28;
-      background: #36210f;
-      box-shadow: 0 0 0 1px rgba(242, 140, 40, 0.16);
+      border-left-color: #ff8a1f;
+      background: linear-gradient(90deg, rgba(255, 138, 31, 0.16), #121a24 18%);
+      box-shadow: inset 8px 0 18px rgba(255, 138, 31, 0.06), 0 0 0 1px rgba(255, 138, 31, 0.12);
     }
 
     .campaign-item.campaign-active .drag-handle {
-      color: #c66a11;
-      text-shadow: none;
+      color: #ff9b3d;
+      text-shadow: 0 0 10px rgba(255, 138, 31, 0.34);
     }
 
     .cycle-item.report-day {
-      border-color: #f28c28;
-      background: #36210f;
-      box-shadow: 0 0 0 2px rgba(242, 140, 40, 0.12);
+      border-color: rgba(255, 138, 31, 0.68);
+      background: linear-gradient(90deg, rgba(255, 138, 31, 0.14), #121a24 34%);
+      box-shadow: 0 0 0 2px rgba(255, 138, 31, 0.08), 0 0 22px rgba(255, 138, 31, 0.08);
     }
 
     .report-badge,
@@ -1394,17 +1395,17 @@
     }
 
     .ai-result {
-      background: #342112;
-      border-color: #7e4a1b;
+      background: #151c26;
+      border-color: rgba(255, 138, 31, 0.22);
     }
 
     .ai-message.user {
-      background: #3a2515;
-      border-color: #7e4a1b;
+      background: #18212c;
+      border-color: rgba(255, 138, 31, 0.24);
     }
 
     .ai-message.assistant {
-      background: #2a1d14;
+      background: #20252d;
       border-color: var(--line);
     }
 
@@ -1415,21 +1416,21 @@
     }
 
     .ai-message-content em {
-      color: #dfbd9b;
+      color: #c7d0dc;
     }
 
     .todo-panel .todo-item {
-      background: #2a1d14;
-      border-color: var(--line);
+      background: #e5e0d6;
+      border-color: rgba(255, 255, 255, 0.16);
     }
 
     .todo-panel .todo-item:hover {
-      background: #342112;
-      border-color: #a95717;
+      background: #f0ebe2;
+      border-color: rgba(255, 138, 31, 0.35);
     }
 
     .todo-panel .todo-text {
-      color: var(--text);
+      color: #22201d;
     }
 
     .todo-panel .todo-item input[type="checkbox"] {
@@ -1437,13 +1438,13 @@
     }
 
     .todo-panel .todo-item button {
-      background: #2f2116;
-      border-color: var(--line);
-      color: var(--text);
+      background: rgba(0, 0, 0, 0.06);
+      border-color: rgba(0, 0, 0, 0.12);
+      color: #22201d;
     }
 
     .draw-controls {
-      background: #22170f;
+      background: #0c1118;
       border-color: var(--line);
       box-shadow: var(--shadow);
       backdrop-filter: none;
@@ -3437,6 +3438,14 @@
     window.setInterval(checkDeskAiStatus, 30000);
     syncCloudState();
     loadDesktopFile();
+    // Live poll: pull cloud state periodically so writes made elsewhere (MCP,
+    // another device) show up without a manual tab refresh. Skipped while a
+    // local edit is still queued to push (cloudSaveTimer set), so an in-flight
+    // keystroke or checkbox toggle never gets clobbered by an incoming pull.
+    window.setInterval(() => {
+      if (cloudSaveTimer) return;
+      syncCloudState();
+    }, 15000);
     window.setTimeout(syncExistingChatMemory, 1200);
   </script>
 </body>
