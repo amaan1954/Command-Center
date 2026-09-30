@@ -37,11 +37,17 @@ const actionSchema = z.object({
     "set_checklist_item",
     "set_cycle",
     "create_note_page",
-    "add_brand"
+    "add_brand",
+    "rename_brand",
+    "remove_brand"
   ]),
   text: z.string().optional(),
   done: z.boolean().optional(),
   brand: z.string().optional(),
+  oldBrand: z.string().optional(),
+  newBrand: z.string().optional(),
+  from: z.string().optional(),
+  to: z.string().optional(),
   platform: z.enum(["google", "meta", "tiktok"]).optional(),
   active: z.boolean().optional(),
   mode: z.enum(["append", "replace"]).optional(),
@@ -86,7 +92,7 @@ export function createCommandCenterServer() {
 
   server.registerTool("apply_dashboard_action", {
     title: "Apply Dashboard Action",
-    description: "Apply one Command Center action such as add_todo, set_campaign_platform, set_brand_note, set_checklist_item, set_cycle, create_note_page, or add_brand.",
+    description: "Apply one Command Center action such as add_todo, set_campaign_platform, set_brand_note, set_checklist_item, set_cycle, create_note_page, add_brand, rename_brand, or remove_brand.",
     inputSchema: { action: actionSchema }
   }, async ({ action }) => {
     const { result, dashboard } = await applyAndSave(action);
@@ -189,6 +195,33 @@ export function createCommandCenterServer() {
     }
   }, async ({ title, content }) => {
     const { result, dashboard } = await applyAndSave({ type: "create_note_page", title, content });
+    return text({ result, summary: summarizeDashboard(dashboard) });
+  });
+
+  server.registerTool("add_brand", {
+    title: "Add Brand",
+    description: "Add a brand across Command Center cycles, checklist, and campaign tracking.",
+    inputSchema: { brand: z.string().min(1) }
+  }, async ({ brand }) => {
+    const { result, dashboard } = await applyAndSave({ type: "add_brand", brand });
+    return text({ result, summary: summarizeDashboard(dashboard) });
+  });
+
+  server.registerTool("rename_brand", {
+    title: "Rename Brand",
+    description: "Rename a brand everywhere in Command Center: cycles, checklist, campaigns, and active brand state.",
+    inputSchema: { oldBrand: z.string().min(1), newBrand: z.string().min(1) }
+  }, async ({ oldBrand, newBrand }) => {
+    const { result, dashboard } = await applyAndSave({ type: "rename_brand", oldBrand, newBrand });
+    return text({ result, summary: summarizeDashboard(dashboard) });
+  });
+
+  server.registerTool("remove_brand", {
+    title: "Remove Brand",
+    description: "Remove a brand everywhere in Command Center and stop defaults from adding it back.",
+    inputSchema: { brand: z.string().min(1) }
+  }, async ({ brand }) => {
+    const { result, dashboard } = await applyAndSave({ type: "remove_brand", brand });
     return text({ result, summary: summarizeDashboard(dashboard) });
   });
 

@@ -968,7 +968,7 @@
     }
 
     .cycle-top {
-      grid-template-columns: 24px minmax(0, 1fr) 72px 72px auto;
+      grid-template-columns: 24px minmax(0, 1fr) 72px 72px auto auto;
     }
 
     .cycle-top .field {
@@ -979,11 +979,11 @@
     }
 
     .campaign-top {
-      grid-template-columns: minmax(0, 1fr) repeat(3, auto);
+      grid-template-columns: minmax(160px, 1fr) repeat(3, auto) auto;
     }
 
     .active-top {
-      grid-template-columns: 1fr 72px;
+      grid-template-columns: 1fr 72px auto;
     }
 
     .field,
@@ -1150,6 +1150,35 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    .brand-name-editor {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .brand-name-editor .field {
+      font-weight: 700;
+    }
+
+    .danger-button {
+      width: 24px;
+      height: 24px;
+      display: inline-grid;
+      place-items: center;
+      padding: 0;
+      color: #ffb36a;
+      border-color: rgba(255, 138, 31, 0.24);
+      background: rgba(255, 138, 31, 0.08);
+    }
+
+    .danger-button:hover {
+      color: #111111;
+      background: var(--accent);
+      border-color: var(--accent);
     }
 
     .brand-row input[type="checkbox"],
@@ -1857,6 +1886,7 @@
       activeBrands: [
         { name: "", status: "Active" }
       ],
+      removedBrands: [],
       timerSeconds: 1500
     };
 
@@ -1869,6 +1899,72 @@
     let draggedCycleIndex = null;
     let draggedCampaignIndex = null;
     let deskAiThinkingChatId = "";
+
+    function brandKey(value) {
+      return String(value || "").trim().toLowerCase();
+    }
+
+    function isRemovedBrand(name) {
+      const key = brandKey(name);
+      return Boolean(key && state.removedBrands?.some((brand) => brandKey(brand) === key));
+    }
+
+    function unremoveBrand(name) {
+      const key = brandKey(name);
+      if (!key) return;
+      state.removedBrands = (state.removedBrands || []).filter((brand) => brandKey(brand) !== key);
+    }
+
+    function rememberRemovedBrand(name) {
+      const cleanName = String(name || "").trim();
+      const key = brandKey(cleanName);
+      if (!key) return;
+      state.removedBrands = state.removedBrands || [];
+      if (!state.removedBrands.some((brand) => brandKey(brand) === key)) {
+        state.removedBrands.push(cleanName);
+      }
+    }
+
+    function sameBrand(left, right) {
+      return Boolean(brandKey(left) && brandKey(left) === brandKey(right));
+    }
+
+    function renameBrandEverywhere(oldName, newName) {
+      const cleanOld = String(oldName || "").trim();
+      const cleanNew = String(newName || "").trim();
+      if (!cleanOld || !cleanNew || sameBrand(cleanOld, cleanNew)) return;
+      unremoveBrand(cleanNew);
+
+      state.cycles.forEach((cycle) => {
+        if (sameBrand(cycle.name, cleanOld)) cycle.name = cleanNew;
+      });
+      state.brandChecklist.forEach((brand) => {
+        if (sameBrand(brand.name, cleanOld)) brand.name = cleanNew;
+      });
+      state.campaigns.forEach((campaign) => {
+        if (sameBrand(campaign.brand, cleanOld)) campaign.brand = cleanNew;
+      });
+      state.activeBrands.forEach((brand) => {
+        if (sameBrand(brand.name, cleanOld)) brand.name = cleanNew;
+      });
+      state.removedBrands = (state.removedBrands || []).map((brand) => sameBrand(brand, cleanOld) ? cleanNew : brand);
+    }
+
+    function removeBrandEverywhere(name) {
+      const cleanName = String(name || "").trim();
+      if (!cleanName) return false;
+      const confirmed = window.confirm(`Remove "${cleanName}" from cycles, campaigns, checklist, and active brand lists?`);
+      if (!confirmed) return false;
+
+      rememberRemovedBrand(cleanName);
+      state.cycles = state.cycles.filter((cycle) => !sameBrand(cycle.name, cleanName));
+      state.brandChecklist = state.brandChecklist.filter((brand) => !sameBrand(brand.name, cleanName));
+      state.campaigns = state.campaigns.filter((campaign) => !sameBrand(campaign.brand, cleanName));
+      state.activeBrands = state.activeBrands.filter((brand) => !sameBrand(brand.name, cleanName));
+      renderAll();
+      saveState();
+      return true;
+    }
 
     function ensureBrandCycles() {
       state.cycles = state.cycles.filter((cycle) => cycle.name.trim());
@@ -1884,7 +1980,7 @@
       );
 
       cycleDefaults.forEach((preset) => {
-        if (!existing.has(preset.name.toLowerCase())) {
+        if (!existing.has(preset.name.toLowerCase()) && !isRemovedBrand(preset.name)) {
           state.cycles.push(makeCycle(preset.name));
         }
       });
@@ -1903,7 +1999,7 @@
       );
 
       activeCampaignDefaults.forEach((brand) => {
-        if (!existing.has(brand.toLowerCase())) {
+        if (!existing.has(brand.toLowerCase()) && !isRemovedBrand(brand)) {
           state.campaigns.push(makeCampaign(brand));
         }
       });
@@ -1920,15 +2016,16 @@
           drawToolbar: parsed.drawToolbar || { x: null, y: null },
           notePages: parsed.notePages?.length ? parsed.notePages : [{ id: "page-1", title: "Page 1", content: parsed.notes || "" }],
           activeNotePageId: parsed.activeNotePageId || parsed.notePages?.[0]?.id || "page-1",
-          aiChats: parsed.aiChats?.length ? parsed.aiChats : structuredClone(defaultState.aiChats),
+          aiChats: Array.isArray(parsed.aiChats) && parsed.aiChats.length ? parsed.aiChats : structuredClone(defaultState.aiChats),
           activeAiChatId: parsed.activeAiChatId || parsed.aiChats?.[0]?.id || "desk-ai-1",
           taskInput: parsed.taskInput || "",
-          todos: parsed.todos || [],
-          rules: parsed.rules?.length ? parsed.rules : structuredClone(defaultState.rules),
-          brandChecklist: parsed.brandChecklist?.length ? parsed.brandChecklist : structuredClone(defaultState.brandChecklist),
-          cycles: parsed.cycles?.length ? parsed.cycles : structuredClone(defaultState.cycles),
-          campaigns: parsed.campaigns?.length ? parsed.campaigns : structuredClone(defaultState.campaigns),
-          activeBrands: parsed.activeBrands?.length ? parsed.activeBrands : structuredClone(defaultState.activeBrands),
+          todos: Array.isArray(parsed.todos) ? parsed.todos : [],
+          rules: Array.isArray(parsed.rules) && parsed.rules.length ? parsed.rules : structuredClone(defaultState.rules),
+          brandChecklist: Array.isArray(parsed.brandChecklist) ? parsed.brandChecklist : structuredClone(defaultState.brandChecklist),
+          cycles: Array.isArray(parsed.cycles) ? parsed.cycles : structuredClone(defaultState.cycles),
+          campaigns: Array.isArray(parsed.campaigns) ? parsed.campaigns : structuredClone(defaultState.campaigns),
+          activeBrands: Array.isArray(parsed.activeBrands) ? parsed.activeBrands : structuredClone(defaultState.activeBrands),
+          removedBrands: parsed.removedBrands || [],
           timerSeconds: typeof parsed.timerSeconds === "number" ? parsed.timerSeconds : 1500
         };
       } catch {
@@ -2018,15 +2115,16 @@
         drawToolbar: parsed.drawToolbar || { x: null, y: null },
         notePages: parsed.notePages?.length ? parsed.notePages : [{ id: "page-1", title: "Page 1", content: parsed.notes || "" }],
         activeNotePageId: parsed.activeNotePageId || parsed.notePages?.[0]?.id || "page-1",
-        aiChats: parsed.aiChats?.length ? parsed.aiChats : structuredClone(defaultState.aiChats),
+        aiChats: Array.isArray(parsed.aiChats) && parsed.aiChats.length ? parsed.aiChats : structuredClone(defaultState.aiChats),
         activeAiChatId: parsed.activeAiChatId || parsed.aiChats?.[0]?.id || "desk-ai-1",
         taskInput: parsed.taskInput || "",
-        todos: parsed.todos || [],
-        rules: parsed.rules?.length ? parsed.rules : structuredClone(defaultState.rules),
-        brandChecklist: parsed.brandChecklist?.length ? parsed.brandChecklist : structuredClone(defaultState.brandChecklist),
-        cycles: parsed.cycles?.length ? parsed.cycles : structuredClone(defaultState.cycles),
-        campaigns: parsed.campaigns?.length ? parsed.campaigns : structuredClone(defaultState.campaigns),
-        activeBrands: parsed.activeBrands?.length ? parsed.activeBrands : structuredClone(defaultState.activeBrands),
+        todos: Array.isArray(parsed.todos) ? parsed.todos : [],
+        rules: Array.isArray(parsed.rules) && parsed.rules.length ? parsed.rules : structuredClone(defaultState.rules),
+        brandChecklist: Array.isArray(parsed.brandChecklist) ? parsed.brandChecklist : structuredClone(defaultState.brandChecklist),
+        cycles: Array.isArray(parsed.cycles) ? parsed.cycles : structuredClone(defaultState.cycles),
+        campaigns: Array.isArray(parsed.campaigns) ? parsed.campaigns : structuredClone(defaultState.campaigns),
+        activeBrands: Array.isArray(parsed.activeBrands) ? parsed.activeBrands : structuredClone(defaultState.activeBrands),
+        removedBrands: parsed.removedBrands || [],
         timerSeconds: typeof parsed.timerSeconds === "number" ? parsed.timerSeconds : 1500
       };
     }
@@ -2058,8 +2156,14 @@
         name.className = "field";
         name.placeholder = "Brand";
         name.value = item.name;
+        const originalName = item.name;
         name.addEventListener("input", () => {
           state.cycles[index].name = name.value;
+          saveState();
+        });
+        name.addEventListener("change", () => {
+          renameBrandEverywhere(originalName, name.value);
+          renderAll();
           saveState();
         });
 
@@ -2102,6 +2206,21 @@
           saveState();
         });
 
+        const removeBrand = document.createElement("button");
+        removeBrand.className = "danger-button";
+        removeBrand.textContent = "x";
+        removeBrand.title = `Remove ${item.name || "this brand"} everywhere`;
+        removeBrand.addEventListener("click", () => {
+          const targetName = state.cycles[index]?.name || item.name;
+          if (!targetName.trim()) {
+            state.cycles.splice(index, 1);
+            renderCycles();
+            saveState();
+            return;
+          }
+          removeBrandEverywhere(targetName);
+        });
+
         card.addEventListener("dragstart", (event) => {
           draggedCycleIndex = index;
           card.classList.add("dragging");
@@ -2134,7 +2253,7 @@
           saveState();
         });
 
-        top.append(indexLabel, name, startWrap, endWrap, expand);
+        top.append(indexLabel, name, startWrap, endWrap, expand, removeBrand);
         card.append(handle, top);
 
         if (reportDay) {
@@ -2267,8 +2386,14 @@
         brand.className = "field";
         brand.placeholder = "Brand";
         brand.value = item.brand;
+        const originalBrand = item.brand;
         brand.addEventListener("input", () => {
           state.campaigns[index].brand = brand.value;
+          saveState();
+        });
+        brand.addEventListener("change", () => {
+          renameBrandEverywhere(originalBrand, brand.value);
+          renderAll();
           saveState();
         });
 
@@ -2329,6 +2454,22 @@
           toggle.append(active, label);
           top.append(toggle);
         });
+
+        const removeBrand = document.createElement("button");
+        removeBrand.className = "danger-button";
+        removeBrand.textContent = "x";
+        removeBrand.title = `Remove ${item.brand || "this brand"} everywhere`;
+        removeBrand.addEventListener("click", () => {
+          const targetName = state.campaigns[index]?.brand || item.brand;
+          if (!targetName.trim()) {
+            state.campaigns.splice(index, 1);
+            renderCampaigns();
+            saveState();
+            return;
+          }
+          removeBrandEverywhere(targetName);
+        });
+        top.append(removeBrand);
         card.append(handle, top);
         host.appendChild(card);
       });
@@ -2336,6 +2477,7 @@
 
     function renderActiveBrands() {
       const host = document.getElementById("activeBrandList");
+      if (!host) return;
       host.innerHTML = "";
       state.activeBrands.forEach((item, index) => {
         const card = document.createElement("div");
@@ -2348,8 +2490,14 @@
         name.className = "field";
         name.placeholder = "Brand";
         name.value = item.name;
+        const originalName = item.name;
         name.addEventListener("input", () => {
           state.activeBrands[index].name = name.value;
+          saveState();
+        });
+        name.addEventListener("change", () => {
+          renameBrandEverywhere(originalName, name.value);
+          renderAll();
           saveState();
         });
 
@@ -2367,7 +2515,22 @@
           saveState();
         });
 
-        top.append(name, status);
+        const removeBrand = document.createElement("button");
+        removeBrand.className = "danger-button";
+        removeBrand.textContent = "x";
+        removeBrand.title = `Remove ${item.name || "this brand"} everywhere`;
+        removeBrand.addEventListener("click", () => {
+          const targetName = state.activeBrands[index]?.name || item.name;
+          if (!targetName.trim()) {
+            state.activeBrands.splice(index, 1);
+            renderActiveBrands();
+            saveState();
+            return;
+          }
+          removeBrandEverywhere(targetName);
+        });
+
+        top.append(name, status, removeBrand);
         card.append(top);
         host.appendChild(card);
       });
@@ -2390,10 +2553,38 @@
         const row = document.createElement("div");
         row.className = "brand-row";
 
-        const name = document.createElement("div");
-        name.className = "brand-name";
-        name.textContent = brand.name;
-        row.appendChild(name);
+        const nameWrap = document.createElement("div");
+        nameWrap.className = "brand-name-editor";
+        const name = document.createElement("input");
+        name.className = "field brand-name";
+        name.placeholder = "Brand";
+        name.value = brand.name;
+        const originalName = brand.name;
+        name.addEventListener("input", () => {
+          state.brandChecklist[index].name = name.value;
+        });
+        name.addEventListener("change", () => {
+          renameBrandEverywhere(originalName, name.value);
+          renderAll();
+          saveState();
+        });
+        const removeBrand = document.createElement("button");
+        removeBrand.className = "danger-button";
+        removeBrand.textContent = "x";
+        removeBrand.title = `Remove ${brand.name || "this brand"} everywhere`;
+        removeBrand.addEventListener("click", () => {
+          const targetName = state.brandChecklist[index]?.name || brand.name;
+          if (!targetName.trim()) {
+            state.brandChecklist.splice(index, 1);
+            renderBrandChecklist();
+            updateSummary(true);
+            saveState();
+            return;
+          }
+          removeBrandEverywhere(targetName);
+        });
+        nameWrap.append(name, removeBrand);
+        row.appendChild(nameWrap);
 
         let done = 0;
         steps.forEach(([key, label]) => {
@@ -2574,7 +2765,7 @@
       }
 
       if (/what can you do|what features|your capabilities|command center features/i.test(lower)) {
-        return "I can operate your Command Center: switch Google, Meta, or TikTok campaigns; update all seven brand checklist items; add or update brand notes and cycle dates; add, complete, reopen, or remove tasks; mark daily rules; create notes pages; add brands; and start, pause, or reset the Pomodoro timer. I can also read the live dashboard, prioritise work, plan, write, and follow a different role in each chat.";
+        return "I can operate your Command Center: switch Google, Meta, or TikTok campaigns; update all seven brand checklist items; add or update brand notes and cycle dates; add, complete, reopen, or remove tasks; mark daily rules; create notes pages; add, rename, or remove brands everywhere; and start, pause, or reset the Pomodoro timer. I can also read the live dashboard, prioritise work, plan, write, and follow a different role in each chat.";
       }
 
       if (/(?:show|list|what).*(?:to-?do|tasks?)|what do i have to do/i.test(lower)) {
@@ -2810,10 +3001,30 @@
       if (type === "add_brand") {
         const brand = String(action.brand || "").trim();
         if (!brand) return "No brand name supplied";
+        unremoveBrand(brand);
         if (!findAgentMatch(state.cycles, "name", brand)) state.cycles.push(makeCycle(brand));
         if (!findAgentMatch(state.brandChecklist, "name", brand)) state.brandChecklist.push(makeBrandRow(brand));
         if (!findAgentMatch(state.campaigns, "brand", brand)) state.campaigns.push(makeCampaign(brand));
         return `Added brand: ${brand}`;
+      }
+
+      if (type === "rename_brand") {
+        const oldName = String(action.oldBrand || action.from || "").trim();
+        const newName = String(action.newBrand || action.to || "").trim();
+        if (!oldName || !newName) return "Rename brand needs oldBrand and newBrand";
+        renameBrandEverywhere(oldName, newName);
+        return `Renamed brand: ${oldName} -> ${newName}`;
+      }
+
+      if (type === "remove_brand") {
+        const brand = String(action.brand || "").trim();
+        if (!brand) return "No brand name supplied";
+        rememberRemovedBrand(brand);
+        state.cycles = state.cycles.filter((cycle) => !sameBrand(cycle.name, brand));
+        state.brandChecklist = state.brandChecklist.filter((item) => !sameBrand(item.name, brand));
+        state.campaigns = state.campaigns.filter((campaign) => !sameBrand(campaign.brand, brand));
+        state.activeBrands = state.activeBrands.filter((item) => !sameBrand(item.name, brand));
+        return `Removed brand everywhere: ${brand}`;
       }
 
       if (type === "create_note_page") {
@@ -2855,7 +3066,7 @@
           checklist: ["contentCalendar", "caption", "campaignSetup", "creatives16", "videos4", "designerCoordination", "report"],
           cycles: ["change dates", "append or replace brand note"],
           campaigns: ["switch Google, Meta, or TikTok on or off"],
-          brands: ["add brand"]
+          brands: ["add brand", "rename brand", "remove brand everywhere"]
         },
         timer: {
           secondsRemaining: state.timerSeconds,
@@ -3127,6 +3338,7 @@
       renderRules();
       renderCycles();
       renderCampaigns();
+      renderActiveBrands();
       renderTodos();
       renderBrandChecklist();
       updateSummary(false);

@@ -28,7 +28,7 @@ You have these Command Center hands and legs through actions:
 - Rule Box: mark daily rules done/pending.
 - Pomodoro: start, pause, reset.
 - Notes: create note pages.
-- Brands: add brands across cycles, checklist, and campaigns.
+- Brands: add, rename, and remove brands across cycles, checklist, active campaigns, active brand lists, and future default auto-adds.
 
 Action command guide:
 - To add work: add_todo with a clean, useful task.
@@ -42,6 +42,8 @@ Action command guide:
 - To control focus time: timer.
 - To create a separate notes page: create_note_page.
 - To onboard a new brand into the dashboard: add_brand.
+- To rename a brand everywhere: rename_brand.
+- To remove a brand everywhere: remove_brand.
 
 Known operating meaning:
 - "toggle", "switch", "enable", "turn on", and "make active" mean set a campaign platform active.
@@ -85,6 +87,8 @@ set_cycle {brand, start, end}
 set_rule_status {text, done}
 timer {operation: start|pause|reset}
 add_brand {brand}
+rename_brand {oldBrand, newBrand}
+remove_brand {brand}
 create_note_page {title, content}
 `;
 

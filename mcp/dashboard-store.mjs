@@ -74,6 +74,8 @@ export function defaultDashboard() {
     brandChecklist: brandPresets.map(([name]) => checklist(name)),
     cycles: brandPresets.map(([name, start, end]) => cycle(name, start, end)),
     campaigns: activeCampaignBrands.map(campaign),
+    activeBrands: [],
+    removedBrands: [],
     timerSeconds: 1500
   };
 }
@@ -170,9 +172,11 @@ export function normalizeDashboard(input) {
   const dashboard = { ...base, ...(input || {}) };
   dashboard.todos = Array.isArray(dashboard.todos) ? dashboard.todos : [];
   dashboard.rules = Array.isArray(dashboard.rules) && dashboard.rules.length ? dashboard.rules : base.rules;
-  dashboard.cycles = Array.isArray(dashboard.cycles) && dashboard.cycles.length ? dashboard.cycles : base.cycles;
+  dashboard.cycles = Array.isArray(dashboard.cycles) ? dashboard.cycles : base.cycles;
   dashboard.campaigns = Array.isArray(dashboard.campaigns) ? dashboard.campaigns : base.campaigns;
-  dashboard.brandChecklist = Array.isArray(dashboard.brandChecklist) && dashboard.brandChecklist.length ? dashboard.brandChecklist : base.brandChecklist;
+  dashboard.brandChecklist = Array.isArray(dashboard.brandChecklist) ? dashboard.brandChecklist : base.brandChecklist;
+  dashboard.activeBrands = Array.isArray(dashboard.activeBrands) ? dashboard.activeBrands : base.activeBrands;
+  dashboard.removedBrands = Array.isArray(dashboard.removedBrands) ? dashboard.removedBrands : base.removedBrands;
   dashboard.notePages = Array.isArray(dashboard.notePages) && dashboard.notePages.length ? dashboard.notePages : base.notePages;
   return dashboard;
 }
@@ -190,6 +194,23 @@ function findMatch(items, field, value) {
       return candidate.includes(target) || target.includes(candidate);
     })
     || null;
+}
+
+function sameBrand(left, right) {
+  return Boolean(norm(left) && norm(left) === norm(right));
+}
+
+function rememberRemovedBrand(dashboard, name) {
+  const cleanName = String(name || "").trim();
+  if (!cleanName) return;
+  dashboard.removedBrands = Array.isArray(dashboard.removedBrands) ? dashboard.removedBrands : [];
+  if (!dashboard.removedBrands.some((brand) => sameBrand(brand, cleanName))) {
+    dashboard.removedBrands.push(cleanName);
+  }
+}
+
+function unremoveBrand(dashboard, name) {
+  dashboard.removedBrands = (dashboard.removedBrands || []).filter((brand) => !sameBrand(brand, name));
 }
 
 export function summarizeDashboard(dashboard) {
@@ -302,10 +323,43 @@ export function applyAction(dashboard, action) {
   if (type === "add_brand") {
     const name = String(action.brand || "").trim();
     if (!name) return "No brand supplied.";
+    unremoveBrand(dashboard, name);
     if (!findMatch(dashboard.cycles, "name", name)) dashboard.cycles.push(cycle(name, "1st", "31st"));
     if (!findMatch(dashboard.brandChecklist, "name", name)) dashboard.brandChecklist.push(checklist(name));
     if (!findMatch(dashboard.campaigns, "brand", name)) dashboard.campaigns.push(campaign(name));
     return `Added brand: ${name}`;
+  }
+
+  if (type === "rename_brand") {
+    const oldName = String(action.oldBrand || action.from || "").trim();
+    const newName = String(action.newBrand || action.to || "").trim();
+    if (!oldName || !newName) return "Rename brand needs oldBrand and newBrand.";
+    unremoveBrand(dashboard, newName);
+    dashboard.cycles.forEach((item) => {
+      if (sameBrand(item.name, oldName)) item.name = newName;
+    });
+    dashboard.brandChecklist.forEach((item) => {
+      if (sameBrand(item.name, oldName)) item.name = newName;
+    });
+    dashboard.campaigns.forEach((item) => {
+      if (sameBrand(item.brand, oldName)) item.brand = newName;
+    });
+    dashboard.activeBrands.forEach((item) => {
+      if (sameBrand(item.name, oldName)) item.name = newName;
+    });
+    dashboard.removedBrands = (dashboard.removedBrands || []).map((brand) => sameBrand(brand, oldName) ? newName : brand);
+    return `Renamed brand: ${oldName} -> ${newName}`;
+  }
+
+  if (type === "remove_brand") {
+    const name = String(action.brand || "").trim();
+    if (!name) return "No brand supplied.";
+    rememberRemovedBrand(dashboard, name);
+    dashboard.cycles = dashboard.cycles.filter((item) => !sameBrand(item.name, name));
+    dashboard.brandChecklist = dashboard.brandChecklist.filter((item) => !sameBrand(item.name, name));
+    dashboard.campaigns = dashboard.campaigns.filter((item) => !sameBrand(item.brand, name));
+    dashboard.activeBrands = dashboard.activeBrands.filter((item) => !sameBrand(item.name, name));
+    return `Removed brand everywhere: ${name}`;
   }
 
   return `Unsupported action: ${type || "unknown"}`;
